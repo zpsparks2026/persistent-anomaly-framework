@@ -1,0 +1,253 @@
+{
+  "config": {
+    "n_subjects": 200,
+    "n_anomalies": 8,
+    "n_sessions": 5,
+    "n_items": 100,
+    "n_options": 4,
+    "effect_sizes": [
+      0.08,
+      0.1,
+      0.12,
+      0.15,
+      0.18,
+      0.2,
+      0.22,
+      0.25
+    ],
+    "bayesian_prior": 0.05,
+    "pa_threshold": 0.95,
+    "dbscan_eps": 1.5,
+    "dbscan_min_samples": 3,
+    "n_seeds": 5,
+    "random_seed": 42
+  },
+  "aggregate": {
+    "bayesian_sensitivity": "0.575 \u00b1 0.100",
+    "bayesian_specificity": "1.000 \u00b1 0.000",
+    "bayesian_auc": "0.971 \u00b1 0.030",
+    "xgboost_auc": "1.000 \u00b1 0.000"
+  },
+  "per_seed": [
+    {
+      "phase1_candidates": 4,
+      "phase2_confirmed": 4,
+      "bayesian_threshold": {
+        "sensitivity": 0.5,
+        "specificity": 1.0,
+        "true_positives": 4,
+        "false_positives": 0,
+        "false_negatives": 4,
+        "true_negatives": 192,
+        "auc": 0.9811197916666667
+      },
+      "xgboost": {
+        "auc": 1.0,
+        "sensitivity": 0.875,
+        "specificity": 1.0
+      },
+      "feature_importance": {
+        "F1_consistency": 0.0467723086476326,
+        "F2_entropy": 0.0218274537473917,
+        "F3_convergence": 0.0,
+        "F4_mahalanobis": 0.01651669852435589,
+        "F5_posterior": 0.2754574120044708,
+        "F6_density": 0.1654527336359024,
+        "N1_temporal_asymmetry": 0.013985837809741497,
+        "N2_error_direction": 0.4269266128540039,
+        "N3_context_variance": 0.0,
+        "N4_cross_task": 0.024027232080698013,
+        "N5_heavy_tails": 0.009033823385834694
+      },
+      "anomaly_posteriors": [
+        4.020307886178371e-10,
+        0.0008424094207952657,
+        0.051197081968353014,
+        0.00010537885322077697,
+        0.9999911631586854,
+        0.9998586292780257,
+        0.9999999989212744,
+        0.9999999999
+      ],
+      "null_posterior_max": 0.003361143306822111,
+      "null_posterior_mean": 1.772538800851214e-05,
+      "seed": 0
+    },
+    {
+      "phase1_candidates": 5,
+      "phase2_confirmed": 5,
+      "bayesian_threshold": {
+        "sensitivity": 0.625,
+        "specificity": 1.0,
+        "true_positives": 5,
+        "false_positives": 0,
+        "false_negatives": 3,
+        "true_negatives": 192,
+        "auc": 0.9625651041666666
+      },
+      "xgboost": {
+        "auc": 1.0,
+        "sensitivity": 0.875,
+        "specificity": 1.0
+      },
+      "feature_importance": {
+        "F1_consistency": 0.036245860159397125,
+        "F2_entropy": 0.009275291115045547,
+        "F3_convergence": 0.031166303902864456,
+        "F4_mahalanobis": 0.09655053913593292,
+        "F5_posterior": 0.19073401391506195,
+        "F6_density": 0.3056948781013489,
+        "N1_temporal_asymmetry": 0.054995518177747726,
+        "N2_error_direction": 0.25808683037757874,
+        "N3_context_variance": 0.008370213210582733,
+        "N4_cross_task": 0.0088805528357625,
+        "N5_heavy_tails": 0.0
+      },
+      "anomaly_posteriors": [
+        1.7498005796952064e-10,
+        1.0291987133504499e-07,
+        0.0008424094207952598,
+        0.9999999654807847,
+        0.9998586292780257,
+        0.9999999999,
+        0.9999999998651594,
+        0.9999999999
+      ],
+      "null_posterior_max": 2.634679560152405e-05,
+      "null_posterior_mean": 3.1568289036109436e-07,
+      "seed": 1
+    },
+    {
+      "phase1_candidates": 5,
+      "phase2_confirmed": 4,
+      "bayesian_threshold": {
+        "sensitivity": 0.5,
+        "specificity": 1.0,
+        "true_positives": 4,
+        "false_positives": 0,
+        "false_negatives": 4,
+        "true_negatives": 192,
+        "auc": 0.9166666666666665
+      },
+      "xgboost": {
+        "auc": 1.0,
+        "sensitivity": 0.875,
+        "specificity": 1.0
+      },
+      "feature_importance": {
+        "F1_consistency": 0.013637294992804527,
+        "F2_entropy": 0.015566366724669933,
+        "F3_convergence": 0.03835917264223099,
+        "F4_mahalanobis": 0.03537902608513832,
+        "F5_posterior": 0.17880654335021973,
+        "F6_density": 0.55333012342453,
+        "N1_temporal_asymmetry": 0.0480293370783329,
+        "N2_error_direction": 0.034546010196208954,
+        "N3_context_variance": 0.04554038122296333,
+        "N4_cross_task": 0.014926323667168617,
+        "N5_heavy_tails": 0.02187943086028099
+      },
+      "anomaly_posteriors": [
+        1e-10,
+        0.0002107354993762948,
+        0.4633334795361948,
+        3.2934253749950333e-06,
+        0.9910321447008724,
+        0.9999955815598203,
+        0.9999998619231534,
+        0.9999999989212746
+      ],
+      "null_posterior_max": 0.00021073549937629602,
+      "null_posterior_mean": 1.224331358833041e-06,
+      "seed": 2
+    },
+    {
+      "phase1_candidates": 6,
+      "phase2_confirmed": 4,
+      "bayesian_threshold": {
+        "sensitivity": 0.5,
+        "specificity": 1.0,
+        "true_positives": 4,
+        "false_positives": 0,
+        "false_negatives": 4,
+        "true_negatives": 192,
+        "auc": 1.0
+      },
+      "xgboost": {
+        "auc": 1.0,
+        "sensitivity": 1.0,
+        "specificity": 1.0
+      },
+      "feature_importance": {
+        "F1_consistency": 0.0,
+        "F2_entropy": 0.0,
+        "F3_convergence": 0.0,
+        "F4_mahalanobis": 0.017157606780529022,
+        "F5_posterior": 0.22995927929878235,
+        "F6_density": 0.0,
+        "N1_temporal_asymmetry": 0.0,
+        "N2_error_direction": 0.7528831362724304,
+        "N3_context_variance": 0.0,
+        "N4_cross_task": 0.0,
+        "N5_heavy_tails": 0.0
+      },
+      "anomaly_posteriors": [
+        0.013310359153547514,
+        0.0002107354993762936,
+        0.4633334795361963,
+        0.8735271662932569,
+        0.9999999309615719,
+        0.9999999654807847,
+        0.9999999999,
+        0.9999999999
+      ],
+      "null_posterior_max": 3.2934253749950363e-06,
+      "null_posterior_mean": 3.6205833705017534e-08,
+      "seed": 3
+    },
+    {
+      "phase1_candidates": 6,
+      "phase2_confirmed": 6,
+      "bayesian_threshold": {
+        "sensitivity": 0.75,
+        "specificity": 1.0,
+        "true_positives": 6,
+        "false_positives": 0,
+        "false_negatives": 2,
+        "true_negatives": 192,
+        "auc": 0.9967447916666666
+      },
+      "xgboost": {
+        "auc": 1.0,
+        "sensitivity": 1.0,
+        "specificity": 1.0
+      },
+      "feature_importance": {
+        "F1_consistency": 0.006338507868349552,
+        "F2_entropy": 0.009834980592131615,
+        "F3_convergence": 0.01818201318383217,
+        "F4_mahalanobis": 0.024204345420002937,
+        "F5_posterior": 0.1033376082777977,
+        "F6_density": 0.7451481223106384,
+        "N1_temporal_asymmetry": 0.0,
+        "N2_error_direction": 0.07403731346130371,
+        "N3_context_variance": 0.018917106091976166,
+        "N4_cross_task": 0.0,
+        "N5_heavy_tails": 0.0
+      },
+      "anomaly_posteriors": [
+        4.116793582302188e-07,
+        3.293425374995032e-06,
+        0.9999293096422394,
+        0.9999977907750294,
+        0.9988701523158855,
+        0.9999999999,
+        0.9999999309615719,
+        0.9999999999
+      ],
+      "null_posterior_max": 0.003361143306822128,
+      "null_posterior_mean": 1.754626452325218e-05,
+      "seed": 4
+    }
+  ]
+}

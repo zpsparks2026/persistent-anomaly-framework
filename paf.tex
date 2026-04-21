@@ -1,0 +1,1535 @@
+\documentclass[11pt,letterpaper]{article}
+
+% ============================================================
+% PACKAGES
+% ============================================================
+\usepackage[margin=1in,headheight=14pt]{geometry}
+\usepackage{times}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows.meta,positioning,calc,fit,backgrounds,decorations.pathreplacing}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{float}
+
+% ============================================================
+% STYLE CONFIGURATION
+% ============================================================
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\textit{\small Persistent Anomalies: A Statistical Framework}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Theorem environments
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+
+% Code listing style
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue!70!black}\bfseries,
+    commentstyle=\color{green!50!black}\itshape,
+    stringstyle=\color{red!60!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=8pt,
+    frame=single,
+    framesep=4pt,
+    backgroundcolor=\color{gray!5},
+    breaklines=true,
+    captionpos=b,
+    language=Python
+}
+
+% TikZ styles
+\tikzset{
+    block/.style={rectangle, draw, fill=blue!8, text width=6em, text centered, rounded corners, minimum height=3em, font=\small},
+    bigblock/.style={rectangle, draw, fill=blue!8, text width=10em, text centered, rounded corners, minimum height=3em, font=\small},
+    decision/.style={diamond, draw, fill=orange!15, text width=5em, text centered, aspect=2, inner sep=1pt, font=\small},
+    signal/.style={rectangle, draw, fill=green!10, text width=5.5em, text centered, rounded corners, minimum height=2.5em, font=\footnotesize},
+    phase/.style={rectangle, draw, fill=blue!15, text width=8em, text centered, rounded corners, minimum height=3.5em, font=\small\bfseries},
+    arrow/.style={-{Stealth[length=2.5mm]}, thick},
+    layer/.style={rectangle, draw, fill=#1, text width=38em, minimum height=2.2em, font=\small, rounded corners=2pt},
+}
+
+\begin{document}
+
+% ============================================================
+% TITLE
+% ============================================================
+\begin{center}
+{\LARGE\bfseries Identifying Persistent Anomalies:\\[4pt]
+A Statistical Framework for Operationalizing\\[4pt]
+Human Intuitive Capabilities}
+
+\vspace{16pt}
+{\large Zach Sparks}\\[4pt]
+{\small\itshape Sparks Solutions LLC\\
+Technological Leadership, Arizona State University\\
+\texttt{zpsparks@asu.edu}}
+
+\vspace{8pt}
+{\small April 2026}
+\end{center}
+
+\vspace{12pt}
+
+% ============================================================
+% ABSTRACT
+% ============================================================
+\section*{Abstract}
+Government-sponsored research programs spanning two decades produced a statistical record that independent evaluators judged sufficient to establish anomalous effects \cite{utts1996}, even as operational utility and mechanism remained contested \cite{air1995}. Prior programs failed not because the signal was absent but because they lacked longitudinal screening architectures capable of separating individuals with genuine differential access from background noise. This paper provides that architecture. The framework introduces a \textit{noise-as-feature paradigm} that analyzes five dimensions of structure within response variability---temporal asymmetry, error directionality, context-modulated variance, cross-task coherence, and heavy-tail distributions---using an information-theoretic channel capacity model to detect statistical dependencies between behavioral output and hidden ground truth. These five noise dimensions augment six conventional signal-based features into an 11-dimensional evidence fusion pipeline employing Bayesian posterior updating, density-based clustering (DBSCAN), and gradient-boosted classification. A three-layer behavioral monitoring system recovers pre-conscious motor and selection-level signal that conscious override typically suppresses. Classification requires persistent deviation across a minimum of five independent sessions with iterative Bayesian convergence, dramatically reducing false positive rates relative to single-session designs. The framework is agnostic about mechanism---it functions as a detector, not a theory---and its statistical methods would also identify predictive intuition, anticipatory bias, and high-sensitivity pattern recognition under non-anomalous interpretations. No empirical validation with human subjects has been conducted; however, a preliminary synthetic experiment demonstrates that the pipeline recovers injected anomalies with zero false positives and AUC $> 0.97$ across effect sizes consistent with the published literature. The paper specifies a complete validation roadmap including preregistered pilot studies, independent multi-site replication, adversarial controls, and power analysis. Ethical safeguards including informed consent, data anonymization, independent oversight, and strict separation between research classification and personnel decisions are integrated throughout.
+
+\medskip
+\noindent\textbf{Keywords:} persistent anomalies, noise-as-feature, Bayesian inference, anticipatory physiology, implicit pattern recognition, channel capacity, anomaly detection, intuitive cognition, human judgment under uncertainty, covertly structured testing
+
+% ============================================================
+% 1. INTRODUCTION
+% ============================================================
+\section{Introduction}
+
+\subsection{The Screening Problem}
+
+The U.S.\ government funded research into anomalous cognition continuously from 1972 to 1995, spanning multiple programs (SCANATE, GRILL FLAME, CENTER LANE, SUN STREAK, STAR GATE) under the Defense Intelligence Agency and Central Intelligence Agency \cite{puthoff1976,targ1977,dod1995}. The statistical evaluator for the final program review, Jessica Utts, concluded that the evidence was ``sufficient to establish that psychic functioning is a real effect'' \cite{utts1996}. The American Institutes for Research evaluation, while questioning operational generality, acknowledged a statistically significant laboratory effect \cite{air1995}. Meta-analytic work on anticipatory physiological effects has independently documented measurable autonomic responses preceding unpredictable stimuli across multiple laboratories \cite{mossbridge2012,radin2004}. IARPA's forecasting programs have demonstrated that exceptional human judgment under uncertainty is a stable, identifiable trait amenable to longitudinal screening \cite{tetlock2015}.
+
+Given this record, the present paper does not attempt to re-adjudicate the existence debate. It addresses the downstream problem: assuming the effect is real in at least some fraction of the population, how do you identify which individuals have differential access, and how do you separate them from noise at population scale? Prior programs failed at exactly this problem: they could sometimes find individuals who performed well, but they had no longitudinal screening architecture capable of distinguishing genuine persistent capability from transient statistical fluctuation. This paper provides that architecture.
+
+\subsection{The Detection Problem}
+
+The framework's contribution is methodological, not theoretical. It does not propose a mechanism for anomalous cognition, nor does it re-argue the case for the phenomenon's existence. It formalizes a \textbf{detection architecture}: given a population, how do you identify which individuals carry the signal?
+
+The difficulty is that the signal, if present, is buried under multiple layers of cognitive processing. Most people know someone with ``great intuition.'' Many individuals report the subjective sensation of knowing---``I knew that was the right answer''---and mean it. Functional neuroimaging may confirm that this sensation is genuine phenomenology: the person authentically \textit{feels} the signal. But the same imaging may also show that the motor decision pathway was already committed to a different response before the feeling could redirect behavior. The sensation is real. The override is real. And the answer is wrong.
+
+This creates a three-way dissociation that prior programs never resolved:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Subjective experience:} The individual reports a sensation of knowing. \textit{Real but unmeasurable by protocol.}
+    \item \textbf{Decision pathway:} Motor cortex commits to a response, potentially overriding the intuitive signal. \textit{Measurable via behavioral monitoring.}
+    \item \textbf{Statistical output:} Across hundreds of trials, the behavioral stream carries non-random structure with respect to hidden targets. \textit{Measurable and testable.}
+\end{enumerate}
+
+The framework targets the third layer---aggregate statistical output---while recovering signal from the second layer that conscious override typically destroys. The core measurement is:
+\begin{equation}
+I(\mathbf{R}_i; \mathbf{A}^*) > 0
+\label{eq:core}
+\end{equation}
+Does the behavioral output pattern of subject $i$ carry mutual information with the hidden answer key $\mathbf{A}^*$? Everything else in the framework---the five noise dimensions, the override index, the motor trajectory analysis---serves to extract that mutual information from different layers of the behavioral stream. Explanation of \textit{why} a subject's output carries structure is a downstream question the framework deliberately does not address.
+
+The framework integrates four methodological pillars: (1) covertly structured task design with hidden ground truth that enables directional deviation analysis; (2) three-layer behavioral monitoring that captures pre-conscious, intuitive, and post-override decision stages; (3) iterative Bayesian updating that refines identification confidence across sessions; and (4) noise-as-feature analysis that detects structure in error rather than accuracy in response. Together, these components transform identification of differential anomalous capability from a speculative enterprise into a signal detection problem with known statistical properties.
+
+\subsection{Scope}
+
+If validated, the framework would provide a measurable cognitive phenotype with potential applications in any domain where human judgment under uncertainty provides value that algorithmic approaches cannot fully replicate, including medical decision-making, financial risk assessment, intelligence analysis, and crisis response. The statistical methods are also applicable under non-anomalous interpretations: even in the absence of any anomalous cognitive capability, the framework would identify individuals with exceptional predictive intuition, anticipatory bias, and high-sensitivity pattern recognition. This robustness is a design property, not the paper's motivation.
+
+% ============================================================
+% FIGURE 1: Three-Phase Pipeline Overview
+% ============================================================
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=1.8cm]
+    % Phases
+    \node[phase, fill=blue!20] (p1) {Phase 1\\Screening};
+    \node[phase, fill=orange!20, right=2.2cm of p1] (p2) {Phase 2\\Validation};
+    \node[phase, fill=green!20, right=2.2cm of p2] (p3) {Phase 3\\Characterization};
+    
+    % Arrows
+    \draw[arrow] (p1) -- node[above, font=\footnotesize] {Candidates} (p2);
+    \draw[arrow] (p2) -- node[above, font=\footnotesize] {Confirmed PAs} (p3);
+    
+    % Methods below
+    \node[below=0.6cm of p1, text width=7em, text centered, font=\scriptsize] {$k$-means\\Hierarchical\\Clustering};
+    \node[below=0.6cm of p2, text width=7em, text centered, font=\scriptsize] {Bayesian Posterior\\Updating\\($\geq$5 sessions)};
+    \node[below=0.6cm of p3, text width=7em, text centered, font=\scriptsize] {DBSCAN\\XGBoost\\Modality Typing};
+    
+    % Input/Output
+    \node[left=1.2cm of p1, font=\small, text width=4em, align=center] (input) {Cohort\\($N$ subjects)};
+    \node[right=1.2cm of p3, font=\small, text width=4em, align=center] (output) {PA Profile\\(typed)};
+    \draw[arrow] (input) -- (p1);
+    \draw[arrow] (p3) -- (output);
+\end{tikzpicture}
+\caption{Three-phase persistent anomaly identification pipeline. Phase 1 screens cohorts via clustering to identify candidates. Phase 2 validates persistence via Bayesian updating across $\geq$5 sessions. Phase 3 characterizes confirmed persistent anomalies via density-based clustering and supervised classification.}
+\label{fig:pipeline}
+\end{figure}
+
+% ============================================================
+% 2. BACKGROUND
+% ============================================================
+\section{Background \& Related Work}
+
+\subsection{The Intelligence-History Record: A Document Hierarchy}
+
+The evidentiary record for anomalous cognition in intelligence operations rests on a hierarchy of sources with varying documentary strength. This subsection organizes the record by source quality rather than narrative appeal, distinguishing archival core from later retelling.
+
+\paragraph{Institutional retrospectives.} The strongest framing sources are the CIA's own internal assessments. Kenneth Kress, a physicist in CIA's Office of Technical Services and the program's first project officer, published a retrospective in the classified journal \textit{Studies in Intelligence} documenting the program's inception, early results, and institutional resistance \cite{kress1977}. Kress's account is significant because it provides the intelligence-insider perspective on why the program was simultaneously funded and politically constrained---a dynamic directly relevant to the methodological failures this paper seeks to correct.
+
+\paragraph{Statistical evaluation.} The most rigorous assessment of the program's scientific output came from Jessica Utts, a professor of statistics at UC Davis, commissioned as part of the 1995 American Institutes for Research evaluation. Utts concluded that ``using the standards applied to any other area of science, it is concluded that psychic functioning has been well established'' \cite{utts1996}. The AIR evaluation as a whole acknowledged statistically significant laboratory results but questioned operational generality and reproducibility \cite{air1995}. The critical methodological point: the AIR evaluation applied single-session assessment paradigms rather than the iterative, longitudinal methodology proposed in this paper.
+
+\paragraph{Documented operational cases.} Declassified records document several operationally significant results, cited here with source-quality annotations. In 1973, remote viewer Pat Price, given only geographic coordinates, described a facility in West Virginia with specific operational details; Kress's contemporaneous CIA retrospective documents this episode and its institutional impact directly \cite{kress1977}, and the SRI researchers published corroborating accounts \cite{puthoff1976,targ1977}. Price was subsequently retasked on Soviet targets and produced descriptions of a large gantry crane at the Semipalatinsk nuclear research facility, details later compared against satellite imagery \cite{targ1977,kress1977}. These episodes are among the best-documented in the primary record because they were reported by the project officer and the principal investigators at the time, not reconstructed later.
+
+Additional cases rest on weaker but still substantive sources. A 1979 remote viewing session identifying the location of a downed Soviet Tupolev-22 bomber in Zaire is documented primarily through participant memoir \cite{smith2005}. DIA records released under FOIA document repeated tasking of remote viewers during the 1979--1981 Tehran hostage crisis, with session summaries describing locations and companionship arrangements of hostages \cite{dod1995}; the session records themselves are primary documents, though their operational impact is less clearly established. These cases are cited as evidence of sustained institutional investment and occasional operational product, not as proof of mechanism.
+
+\paragraph{Evidentiary boundaries.} The paper does not anchor its premise to claims that lack clean primary-source documentation: specific rescue operations attributed solely to remote viewing, routine operational submarine tracking, or precise card-prediction accuracy rates. The distinction between documentary core and later embellishment is itself methodologically important: the framework proposed here is designed precisely to replace anecdotal evidence with longitudinal statistical assessment.
+
+\paragraph{Program logic.} The record supports two conclusions directly relevant to this paper. First, anomalous cognitive capability produced operationally significant results in specific cases across multiple viewers, programs, and decades. Second, no program developed a systematic methodology for identifying which individuals had genuine capability versus transient performance. Every program measured conscious performance on structured tasks in single or limited sessions. The persistent anomaly framework addresses exactly this gap.
+
+\subsection{Statistical Foundations: Signal in the Noise}
+
+The central methodological insight of this framework is the reinterpretation of response variability. In conventional psychometric assessment, deviation from expected response distributions is treated as error variance---noise to be minimized. This paper proposes that persistent, systematic deviations from randomness in covertly structured tasks constitute \textit{signal}: evidence of underlying cognitive processes that operate below the threshold of conscious reasoning but produce measurable statistical signatures.
+
+This approach has precedent in multiple domains. In financial markets, persistent alpha generation---returns consistently exceeding market benchmarks---is treated as evidence of genuine analytical capability rather than luck, distinguishable through longitudinal performance tracking and risk-adjusted metrics \cite{fama2010}. In clinical medicine, diagnostic accuracy that persistently exceeds base rates identifies expert clinicians whose pattern recognition operates through mechanisms not fully captured by explicit decision rules \cite{norman2017}. The same statistical logic applies to intuitive cognition: \textit{persistence distinguishes capability from chance}.
+
+\begin{definition}[Persistent Anomaly]
+An individual $i$ is classified as a \textbf{persistent anomaly} if their response vector $\mathbf{r}_i^{(t)}$ satisfies:
+\begin{equation}
+P(\theta_i = 1 \mid \mathbf{D}_1, \ldots, \mathbf{D}_T) \geq 0.95 \quad \text{for } T \geq 5 \text{ independent sessions}
+\end{equation}
+where $\theta_i = 1$ denotes anomalous cognitive status and $\mathbf{D}_t$ is the response data from session $t$.
+\end{definition}
+
+\subsection{IARPA Forecasting Programs}
+
+The Intelligence Advanced Research Projects Activity (IARPA) has funded multiple programs investigating exceptional human judgment. The Aggregative Contingent Estimation (ACE) program identified ``superforecasters''---individuals whose probabilistic predictions consistently outperform base rates and domain experts \cite{tetlock2015}. The FOCUS and SHARP programs explored related capabilities in geospatial intelligence and sensemaking contexts.
+
+These programs demonstrate institutional acceptance of the core premise: that exceptional human judgment capability exists in the population, can be identified through longitudinal performance tracking, and provides operational value when systematically deployed. The persistent anomaly framework extends this paradigm from structured forecasting tasks to covertly structured intuitive assessment.
+
+% ============================================================
+% 3. METHODOLOGY
+% ============================================================
+\section{Methodology}
+
+\subsection{Conceptual Framework}
+
+The identification of persistent anomalies proceeds through three phases (Figure~\ref{fig:pipeline}): screening, validation, and characterization. Each phase employs distinct task designs and statistical methods calibrated to the specific identification objective.
+
+\begin{definition}[Persistent Anomaly Hypothesis]
+The core hypothesis is that persistent anomalies occupy the extreme tails of the response distribution in covertly structured tasks---rare but measurable outliers whose deviation from chance is:
+\begin{enumerate}[nosep]
+    \item Consistent across sessions ($\geq$5 independent assessments)
+    \item Robust to task variation (reformulated stimuli)
+    \item Distinguishable from transient statistical fluctuations via iterative assessment
+\end{enumerate}
+\end{definition}
+
+\subsection{Covertly Structured Task Design}
+
+To assess intuitive cognition without introducing cognitive priming, participants complete tasks devoid of explicit context, instructions, or feedback. The canonical example is a \textit{blank response matrix}: participants are presented with an answer sheet containing $N$ items with $M$ response options each, instructed only to ``respond to each item.'' No questions are provided. Responses arise entirely from the participant's internal processes.
+
+Critically, while tasks appear unstructured to the participant, \textbf{each item has a definite correct answer known to the experimenter}. This hidden ground truth transforms the protocol from measuring deviation from uniform randomness into measuring deviation from randomness \textit{toward correctness}---a fundamentally more powerful statistical test. The participant experiences an unstructured task; the experimenter holds a scoring key.
+
+Additional task variants include abstract pattern completion (geometric sequences with a single correct solution not deducible from context), temporal ordering of randomized event descriptions (with known chronology), and forced-choice color or symbol selection (with hidden target). Tasks satisfy four design criteria:
+
+\medskip
+\noindent\textbf{Criterion 1 (Null baseline):} Under the null hypothesis $H_0$ (random responding), the expected response distribution is known and uniform:
+\begin{equation}
+P(\mathbf{r} \mid H_0) = \prod_{j=1}^{N} \frac{1}{M} = M^{-N}
+\end{equation}
+
+\noindent\textbf{Criterion 2 (No priming):} Task presentation provides no information that could guide responses through conventional reasoning.
+
+\noindent\textbf{Criterion 3 (Iterative stability):} Tasks can be reformulated across sessions without altering the underlying statistical structure, enabling longitudinal comparison.
+
+\noindent\textbf{Criterion 4 (Hidden ground truth):} Each item has a definite correct answer $a_j^*$ known to the experimenter but inaccessible to the participant through conventional means. This enables directional deviation analysis:
+\begin{equation}
+\delta_i^{(t)} = \frac{1}{N} \sum_{j=1}^{N} \mathbb{1}[r_{ij}^{(t)} = a_j^*] - \frac{1}{M}
+\label{eq:directional}
+\end{equation}
+where $\delta_i > 0$ indicates above-chance accuracy toward ground truth.
+
+\subsection{Behavioral Monitoring Layer}
+
+The final submitted response captures only the endpoint of the decision process. The framework augments response data with continuous behavioral monitoring that captures pre-conscious and pre-submission dynamics (Figure~\ref{fig:behavioral}).
+
+In computer-administered protocols, three data streams are recorded simultaneously:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Motor trajectory:} Mouse position $\mathbf{m}(t) = (x(t), y(t))$ sampled at $\geq 60$\,Hz \cite{freeman2011}, including velocity $\dot{\mathbf{m}}(t)$, acceleration $\ddot{\mathbf{m}}(t)$, and hover duration over each response option.
+    \item \textbf{Selection history:} The complete sequence of selections and deselections $\{(s_k, t_k)\}_{k=1}^{K_j}$ for each item $j$, including the initial selection $s_1$, any changes, and the final submission $s_{K_j}$.
+    \item \textbf{Timing profile:} Response latency $\Delta t_j$ per item, inter-item interval, and total session duration.
+\end{enumerate}
+
+The behavioral layer is diagnostically critical because of the \textbf{conscious override phenomenon}: a subject may initially select the correct answer---driven by an intuitive process below conscious reasoning---and then change to an incorrect answer because ``I can't possibly know this.'' This override pattern produces a specific signature:
+
+\begin{definition}[Override Index]
+For participant $i$ on item $j$, let $s_1^{(j)}$ denote the initial selection and $s_K^{(j)}$ the final submission. The override index is:
+\begin{equation}
+O_i = \frac{1}{N} \sum_{j=1}^{N} \mathbb{1}[s_1^{(j)} = a_j^* \;\wedge\; s_K^{(j)} \neq a_j^*]
+\label{eq:override}
+\end{equation}
+A participant whose initial selections are correct at above-chance rates but whose final submissions revert to chance exhibits $O_i > 0$: the intuitive signal is being \textup{detected and then suppressed}.
+\end{definition}
+
+The four layers of the decision process produce a signal hierarchy (Table~\ref{tab:behavioral}). Every prior program measured only the bottom layer. The framework measures layers 2 and 3. Layer 1---the subjective sensation that motivates the entire enterprise---is real phenomenology but is not part of the measurement.
+
+\begin{table}[h]
+\centering
+\caption{Four-layer signal hierarchy. Signal is most frequent at the phenomenological layer (top) but unmeasurable by protocol. Signal is rarest at the response layer (bottom) but conventionally measured. The framework targets the motor and selection layers---where signal is detectable in aggregate but typically discarded.}
+\label{tab:behavioral}
+\begin{tabular}{@{}clllc@{}}
+\toprule
+& \textbf{Layer} & \textbf{What Happens} & \textbf{Signal Frequency} & \textbf{Measurable?} \\
+\midrule
+1 & Phenomenological & ``I knew it'' sensation & Often (self-reported) & No \\
+2 & Motor & Trajectory biased toward $a_j^*$ & Frequent but weak & In aggregate \\
+3 & Selection & Initial click on $a_j^*$, then override & Rare & Per-trial \\
+4 & Response & Correct final submission & Very rare & Conventional \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+% FIGURE: Three-Layer Behavioral Model
+% ============================================================
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.72, every node/.style={transform shape}]
+
+% Four layers as stacked boxes
+\tikzset{
+    blayer/.style={rectangle, draw, fill=#1, text width=28em, minimum height=2.6em, 
+                   font=\small, rounded corners=2pt, inner sep=6pt}
+}
+
+% Layer 1: Phenomenological (top, dashed = not measured)
+\node[blayer=gray!10, dashed, draw=gray!60] (phenom) at (0, 4.2) {
+    \textbf{Layer 1: Phenomenological} \hfill \textit{subjective}\\[1pt]
+    \footnotesize ``I knew that was the right answer'' --- real sensation, \textbf{not measured by protocol}
+};
+
+% Layer 2: Final response
+\node[blayer=green!12] (response) at (0, 2.8) {
+    \textbf{Layer 4: Final Response} \hfill \textit{conscious}\\[1pt]
+    \footnotesize Submitted answer (post-override) --- signal: directional accuracy $\delta_i > 0$
+};
+
+% Layer 3: Selection dynamics
+\node[blayer=blue!12] (selection) at (0, 1.4) {
+    \textbf{Layer 3: Selection Dynamics} \hfill \textit{intuitive $\to$ override}\\[1pt]
+    \footnotesize Initial selection, changes, timing --- signal: override pattern ($O_i > 0$)
+};
+
+% Layer 4: Motor (deepest)
+\node[blayer=purple!12] (motor) at (0, 0) {
+    \textbf{Layer 2: Motor Trajectory} \hfill \textit{pre-conscious}\\[1pt]
+    \footnotesize Mouse path, velocity, hover duration --- signal: hover over $a_j^*$ when not selected
+};
+
+% Measurement boundary between phenom and response
+\draw[dashed, thick, red!40!black] (-6, 3.55) -- (6, 3.55);
+\node[font=\tiny\itshape, red!40!black, fill=white, inner sep=2pt] at (0, 3.55) {measurement boundary};
+
+% Time arrow on left
+\draw[{Stealth[length=3mm]}-, very thick, gray] (-5.5, 4.8) -- (-5.5, -0.5);
+\node[rotate=90, font=\small\itshape, gray] at (-6.3, 2.1) {decision timeline};
+
+% Signal detectability arrow on right  
+\draw[-{Stealth[length=3mm]}, very thick, red!60!black] (5.5, 4.8) -- (5.5, -0.5);
+\node[rotate=270, font=\small\itshape, red!60!black] at (6.5, 2.1) {signal detectability};
+
+% Override annotation
+\draw[-{Stealth[length=2mm]}, thick, orange!70!black] 
+    ([xshift=4.5cm]selection.east) -- ([xshift=4.5cm]response.east)
+    node[midway, right=3pt, font=\scriptsize, text width=6em] {conscious override\\suppresses signal};
+
+\end{tikzpicture}
+\caption{Four-layer signal hierarchy. The phenomenological layer (dashed, top) is real subjective experience but falls outside the measurement boundary. The framework measures layers 2--4, with signal detectability strongest in the motor layer (pre-conscious) and weakest in the final response layer (post-override). Every prior program measured only layer 4.}
+\label{fig:behavioral}
+\end{figure}
+
+The behavioral monitoring layer fundamentally changes the noise-as-feature analysis (Section~3.4). Motor trajectories that consistently approach the correct answer before veering away contribute to temporal asymmetry (N1). Override patterns that consistently suppress correct initial selections produce the directional bias captured by N2. Variance in override frequency across cognitive load conditions maps directly to context-modulated variance (N3). The behavioral layer does not merely supplement the response data---it recovers signal that the conscious mind is actively destroying.
+
+\subsection{Answer-Pattern Encoding}
+
+The standalone screening session described in Section~3.2 is the canonical protocol. However, the framework's statistical power increases substantially when the psi scoring key is embedded within assessments that subjects are already taking. This subsection defines the encoding methodology; operational deployment contexts are discussed in Section~9.
+
+\subsubsection{Passive Embedding}
+
+In the simplest configuration, a small number of covertly structured items ($n_{\text{psi}}$) are distributed among standard test items ($n_{\text{test}}$). Each psi item presents a conventional-looking question whose standard correct answer is known, but whose \textit{hidden target} answer is drawn from a separate psi key $\mathbf{A}^*_{\text{psi}}$. The subject answers normally; the experimenter scores against both keys.
+
+This approach has limited statistical power because $n_{\text{psi}}$ must remain small relative to $n_{\text{test}}$ to avoid detection. With a typical $n_{\text{psi}} = 10$--$20$ items per test and $M = 4$ options, the per-session trial count is low.
+
+\subsubsection{Differential Pair Accuracy}
+
+A more powerful approach encodes the psi signal not in individual items but in the \textbf{sequential pattern of responses} across standard test items. The subject answers ordinary test questions with ordinary correct answers. The psi signal is embedded in the \textit{differential accuracy} on designated versus non-designated item pairs.
+
+The experimenter partitions all adjacent item pairs into two sets: \textit{designated} pairs $\mathcal{P}_D$ (fraction $\phi$ of all pairs, typically $\phi \approx 0.3$) and \textit{control} pairs $\mathcal{P}_C$. This partition constitutes the psi key $\mathbf{A}^*_{\text{psi}}$. The subject has no knowledge of the partition.
+
+\begin{definition}[Pair Accuracy]
+For participant $i$, the pair accuracy on designated and control pairs is:
+\begin{align}
+\hat{p}_D(i) &= \frac{1}{|\mathcal{P}_D|} \sum_{(j,j+1) \in \mathcal{P}_D} \mathbb{1}[(r_j, r_{j+1}) = (a_j, a_{j+1})] \label{eq:pd} \\
+\hat{p}_C(i) &= \frac{1}{|\mathcal{P}_C|} \sum_{(j,j+1) \in \mathcal{P}_C} \mathbb{1}[(r_j, r_{j+1}) = (a_j, a_{j+1})] \label{eq:pc}
+\end{align}
+The psi test statistic is the differential pair accuracy:
+\begin{equation}
+\Delta_i = \hat{p}_D(i) - \hat{p}_C(i)
+\label{eq:pattern}
+\end{equation}
+\end{definition}
+
+Under the null hypothesis (no psi influence on designated pairs), pair accuracy is uniform across the partition and $\mathbb{E}[\Delta_i \mid H_0] = 0$, regardless of the subject's overall test performance. A high-performing student scores well on \textit{both} designated and control pairs equally; a low-performing student scores poorly on both. The differential $\Delta_i$ is immune to overall ability confounds by construction.
+
+The null variance is:
+\begin{equation}
+\text{Var}(\Delta_i \mid H_0) = p_i(1-p_i)\left(\frac{1}{|\mathcal{P}_D|} + \frac{1}{|\mathcal{P}_C|}\right)
+\label{eq:pairnull}
+\end{equation}
+where $p_i = p_j \cdot p_{j+1}$ is the subject's expected pair accuracy estimated from overall test performance. For a subject scoring 70\% on individual items with 99 total pairs ($|\mathcal{P}_D| = 30$, $|\mathcal{P}_C| = 69$), the null standard deviation is approximately 0.11---making deviations of $\Delta_i > 0.22$ significant at the $p < 0.05$ level.
+
+No additional items are required. A 200-item standardized test produces up to 99 adjacent pairs. Combined with triplet and higher-order patterns, the effective psi trial count per session can reach $n_{\text{eff}} \gg n_{\text{test}}$.
+
+\subsection{The Noise-as-Feature Paradigm}
+
+In conventional psychometric screening, noise is treated as error: variance to be averaged out so a clean signal can emerge. The persistent anomaly framework inverts this assumption. Rather than asking \textit{``Can a subject produce a clean, repeatable signal?''}, the framework asks:
+
+\begin{quote}
+\textit{Does this subject produce structured deviations within noise that are statistically non-random across time, context, and task?}
+\end{quote}
+
+The protocol does not look for accuracy alone. It looks for \textbf{structure in error}. This is the central methodological innovation of the framework and distinguishes it from both classical psychometric assessment and prior anomalous cognition research programs.
+
+If anomalous cognition exists at all, it would be expected to manifest below conscious control, intermittently, context-sensitively, and buried in stochastic processes. It would not look like a stable channel. It would look like bias, drift, timing anomalies, clustering, or anticipation effects embedded in otherwise noisy outputs. Treating noise as a feature is therefore not indulgent---it is \textit{required} if the hypothesis is even remotely true.
+
+The framework analyzes noise along five dimensions (Figure~\ref{fig:naf}):
+
+\begin{enumerate}[nosep]
+    \item \textbf{Temporal asymmetry (N1):} Does deviation cluster \textit{before} stimuli, not just after?
+    \item \textbf{Error directionality (N2):} Are mistakes biased in a consistent direction rather than symmetrically random?
+    \item \textbf{Context-modulated variance (N3):} Does variance change systematically with emotional, cognitive, or environmental load?
+    \item \textbf{Cross-task coherence (N4):} Do unrelated tasks show correlated anomaly signatures?
+    \item \textbf{Heavy-tail distributions (N5):} Are tails heavier than Gaussian expectation? Are there excess coincidences?
+\end{enumerate}
+
+None of these require belief in anomalous cognition. They are \textbf{statistical fingerprints}---the same analytic primitives used in fault detection, signals intelligence, network anomaly detection, and early-warning systems. The framework imports those engineering standards, not parapsychological ones.
+
+Crucially, the noise-as-feature paradigm preserves the separation between screening and validation (Section~3.1). Screening asks: \textit{who is statistically unusual?} Validation asks: \textit{why?} Most prior programs collapsed these steps and failed. The framework keeps them separate, allowing identification of outliers without requiring mechanistic explanation---an approach compatible with intelligence community evaluation standards.
+
+% ============================================================
+% FIGURE: Noise-as-Feature Architecture
+% ============================================================
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.62, every node/.style={transform shape}]
+
+% === TOP: The Ontological Inversion ===
+\node[rectangle, draw, fill=red!8, text width=14em, text centered, rounded corners, 
+      minimum height=2.8em, font=\small\bfseries, line width=0.8pt] 
+      (conventional) at (-5.5, 8) {Conventional Paradigm\\[2pt]\footnotesize Noise $=$ Error $\to$ Filter};
+
+\node[rectangle, draw, fill=blue!12, text width=14em, text centered, rounded corners, 
+      minimum height=2.8em, font=\small\bfseries, line width=0.8pt] 
+      (inverted) at (5.5, 8) {PAF Paradigm\\[2pt]\footnotesize Noise $=$ Signal Space $\to$ Analyze};
+
+\draw[-{Stealth[length=3mm]}, very thick, red!60!black] (conventional) -- 
+    node[above, font=\footnotesize\itshape, text width=8em, align=center] {ontological\\inversion} (inverted);
+
+% === RAW INPUT ===
+\node[rectangle, draw, fill=gray!10, text width=12em, text centered, rounded corners,
+      minimum height=2.5em, font=\small] 
+      (raw) at (0, 6) {Raw Response Stream $\mathbf{r}_i^{(t)}$};
+
+% === FIVE NOISE DIMENSIONS ===
+\tikzset{
+    nfdim/.style={rectangle, draw, fill=#1, text width=7.5em, text centered, 
+                  rounded corners, minimum height=3.8em, font=\scriptsize, 
+                  line width=0.6pt}
+}
+
+\node[nfdim=purple!12] (ta) at (-7, 3) {\textbf{N1: Temporal}\\\textbf{Asymmetry}\\[2pt]$I(R_t; S_{t+\tau})$\\for $\tau > 0$};
+\node[nfdim=orange!12] (ed) at (-3.5, 3) {\textbf{N2: Error}\\\textbf{Directionality}\\[2pt]$\mathbf{b}_i = \mathbb{E}[\mathbf{e}_i]$\\$\neq \mathbf{0}$};
+\node[nfdim=teal!12]   (cv) at (0, 3) {\textbf{N3: Context}\\\textbf{Variance}\\[2pt]$\sigma^2(C)$\\load-modulated};
+\node[nfdim=blue!12]   (ct) at (3.5, 3) {\textbf{N4: Cross-Task}\\\textbf{Coherence}\\[2pt]$\rho(\mathcal{A}_k, \mathcal{A}_l)$\\$k \neq l$};
+\node[nfdim=red!10]    (ht) at (7, 3) {\textbf{N5: Heavy}\\\textbf{Tails}\\[2pt]$\alpha$-stable\\tail index};
+
+\foreach \n in {ta,ed,cv,ct,ht}
+    \draw[-{Stealth[length=2mm]}, thick, gray!70] (raw.south) -- (\n.north);
+
+% === NOISE FEATURE VECTOR ===
+\node[rectangle, draw, fill=yellow!15, text width=22em, text centered, rounded corners,
+      minimum height=2.5em, font=\small, line width=0.8pt] 
+      (nfv) at (0, 0.5) {\textbf{Noise Feature Vector:} $\mathbf{n}_i = (A_i, \mathbf{b}_i, \sigma^2_i(C), \rho_i, \hat{\alpha}_i)$};
+
+\foreach \n in {ta,ed,cv,ct,ht}
+    \draw[-{Stealth[length=2mm]}, thick, gray!70] (\n.south) -- (nfv.north);
+
+% === EXISTING FEATURES (dashed) ===
+\node[rectangle, draw, fill=green!10, text width=22em, text centered, rounded corners,
+      minimum height=2.5em, font=\small, line width=0.6pt, dashed] 
+      (existing) at (0, -1.5) {\textit{Existing:} Consistency, Entropy, Cluster, $d_M$, Posterior, DBSCAN};
+
+\draw[-{Stealth[length=2.5mm]}, thick, blue!60!black] (nfv.south) -- (existing.north);
+
+% === COMBINED EVIDENCE FUSION ===
+\node[rectangle, draw, fill=yellow!20, text width=26em, text centered, rounded corners,
+      minimum height=2.8em, font=\small\bfseries, line width=0.8pt] 
+      (fusion) at (0, -3.5) {Extended Evidence Fusion: $P(\theta_i = 1 \mid \mathbf{D}, \mathbf{N})$\\[2pt]
+      \footnotesize 11-dimensional feature space};
+
+\draw[-{Stealth[length=2.5mm]}, thick, blue!60!black] (existing.south) -- (fusion.north);
+
+% === THREE OUTPUTS ===
+\node[rectangle, draw, fill=green!20, text width=6em, text centered, rounded corners,
+      minimum height=2.5em, font=\small] (pa) at (-5, -5.8) {Persistent\\Anomaly};
+\node[rectangle, draw, fill=orange!15, text width=6em, text centered, rounded corners,
+      minimum height=2.5em, font=\small] (unc) at (0, -5.8) {Uncertain\\(Monitor)};
+\node[rectangle, draw, fill=red!12, text width=6em, text centered, rounded corners,
+      minimum height=2.5em, font=\small] (null) at (5, -5.8) {Null\\Responder};
+
+\draw[-{Stealth[length=2.5mm]}, thick, green!60!black] (fusion.south) -- 
+    node[left, font=\scriptsize] {$P > 0.95$} (pa.north);
+\draw[-{Stealth[length=2.5mm]}, thick, orange!70!black] (fusion.south) -- (unc.north);
+\draw[-{Stealth[length=2.5mm]}, thick, red!60!black] (fusion.south) -- 
+    node[right, font=\scriptsize] {$P < 0.20$} (null.north);
+
+\end{tikzpicture}
+\caption{Noise-as-feature signal architecture. The framework inverts the conventional paradigm (top), treating noise as the primary analytical domain. Five noise dimensions (N1--N5) extract structure from error patterns, producing a noise feature vector that augments the existing six signal-based features (dashed) into an 11-dimensional evidence fusion pipeline.}
+\label{fig:naf}
+\end{figure}
+
+% ============================================================
+% FIGURE 2: Signal Architecture
+% ============================================================
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=0.8cm]
+    % Input
+    \node[bigblock, fill=red!10] (input) {Participant Response $\mathbf{r}_i^{(t)}$};
+    
+    % Signals
+    \node[signal, below left=1.2cm and 3.0cm of input] (rc) {Response\\Consistency};
+    \node[signal, right=0.3cm of rc] (ce) {Cross-Session\\Entropy};
+    \node[signal, right=0.3cm of ce] (cc) {Cluster\\Convergence};
+    \node[signal, right=0.3cm of cc] (md) {Mahalanobis\\Distance};
+    \node[signal, right=0.3cm of md] (bp) {Bayesian\\Posterior};
+    \node[signal, right=0.3cm of bp] (db) {DBSCAN\\Density};
+    
+    % Fusion
+    \node[bigblock, fill=yellow!15, below=1.5cm of cc, xshift=0.8cm] (fusion) {Evidence Fusion: $P(\theta_i = 1 \mid \mathbf{D})$};
+    
+    % Outputs
+    \node[block, fill=green!20, below left=1.2cm and 2.5cm of fusion] (pa) {Persistent\\Anomaly};
+    \node[block, fill=orange!20, below=1.2cm of fusion] (unc) {Uncertain\\(Monitor)};
+    \node[block, fill=red!15, below right=1.2cm and 2.5cm of fusion] (null) {Null\\Responder};
+    
+    % Arrows from input to signals
+    \foreach \s in {rc,ce,cc,md,bp,db}
+        \draw[arrow, gray] (input.south) -- (\s.north);
+    
+    % Arrows from signals to fusion
+    \foreach \s in {rc,ce,cc,md,bp,db}
+        \draw[arrow, gray] (\s.south) -- (fusion.north);
+    
+    % Arrows from fusion to outputs
+    \draw[arrow, green!60!black, thick] (fusion.south) -- node[left, font=\scriptsize] {$P > 0.95$} (pa.north);
+    \draw[arrow, orange!70!black, thick] (fusion.south) -- (unc.north);
+    \draw[arrow, red!60!black, thick] (fusion.south) -- node[right, font=\scriptsize] {$P < 0.20$} (null.north);
+\end{tikzpicture}
+\caption{Persistent anomaly signal architecture. Six discrimination features feed into evidence fusion, producing three-way classification with asymmetric thresholds.}
+\label{fig:signals}
+\end{figure}
+
+\subsection{Statistical Analysis Pipeline}
+
+\subsubsection{Phase 1: Screening via Clustering}
+
+Initial screening employs clustering algorithms to identify group-level response convergence. Given a cohort of $N$ participants completing $M$-item tasks across $T$ sessions, response vectors are constructed for each participant and analyzed using both $k$-means and hierarchical clustering.
+
+$K$-means partitioning identifies response clusters where subsets of participants converge on the same responses across items---convergence that, absent external cues, suggests shared underlying processes. Hierarchical clustering provides additional granularity, revealing nested subgroup structure within larger clusters.
+
+\begin{equation}
+\text{Cluster}(\mathbf{r}_i) = \arg\min_{k \in \{1,\ldots,K\}} \| \mathbf{r}_i - \boldsymbol{\mu}_k \|^2
+\label{eq:kmeans}
+\end{equation}
+
+Participants whose responses consistently cluster with a convergent subgroup across sessions are flagged for Phase 2 validation. The convergence criterion requires stable cluster assignment across $\geq$3 of $T$ screening sessions:
+
+\begin{equation}
+\text{Stability}(i) = \frac{1}{\binom{T}{2}} \sum_{t < t'} \mathbb{1}[\text{Cluster}(\mathbf{r}_i^{(t)}) = \text{Cluster}(\mathbf{r}_i^{(t')})]
+\end{equation}
+
+\subsubsection{Phase 2: Validation via Bayesian Inference}
+
+Bayesian inference provides the primary validation mechanism. For each participant flagged in Phase 1, a prior probability of persistent anomaly status is established based on base rates from the screening cohort.
+
+\begin{definition}[Bayesian Posterior Updating]
+Let $\theta_i \in \{0, 1\}$ denote the binary classification of participant $i$. After session $t$, the posterior is:
+\begin{equation}
+P(\theta_i = 1 \mid \mathbf{D}_1, \ldots, \mathbf{D}_t) = \frac{P(\mathbf{D}_t \mid \theta_i = 1) \cdot P(\theta_i = 1 \mid \mathbf{D}_1, \ldots, \mathbf{D}_{t-1})}{P(\mathbf{D}_t)}
+\label{eq:bayes}
+\end{equation}
+where the likelihood under the anomaly hypothesis is:
+\begin{equation}
+P(\mathbf{D}_t \mid \theta_i = 1) = \prod_{j=1}^{N} \hat{p}_{c(i),j}(r_{ij}^{(t)})
+\end{equation}
+with $\hat{p}_{c(i),j}(\cdot)$ the empirical response distribution of cluster $c(i)$ at item $j$, and the null likelihood is:
+\begin{equation}
+P(\mathbf{D}_t \mid \theta_i = 0) = M^{-N}
+\end{equation}
+\end{definition}
+
+Over multiple sessions, the posterior probability converges: true persistent anomalies exhibit monotonically increasing posterior probability, while false positives from Phase 1 screening revert toward the null baseline. A classification threshold of $P(\theta_i = 1 \mid \mathbf{D}) \geq 0.95$ across a minimum of five sessions is required for formal identification.
+
+% ============================================================
+% FIGURE 3: Bayesian Convergence
+% ============================================================
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.85]
+    % Axes
+    \draw[thick,->] (0,0) -- (11,0) node[below] {\small Session};
+    \draw[thick,->] (0,0) -- (0,6.5) node[left, rotate=90, anchor=south] {\small $P(\theta = 1 \mid \mathbf{D})$};
+    
+    % Grid
+    \foreach \y in {0,1,...,6}
+        \draw[gray!20] (0,\y) -- (10.5,\y);
+    \foreach \x in {1,...,10}
+        \draw[gray!20] (\x,0) -- (\x,6);
+    
+    % Y-axis labels
+    \node[left, font=\scriptsize] at (0,0) {0.0};
+    \node[left, font=\scriptsize] at (0,1.2) {0.2};
+    \node[left, font=\scriptsize] at (0,2.4) {0.4};
+    \node[left, font=\scriptsize] at (0,3.6) {0.6};
+    \node[left, font=\scriptsize] at (0,4.8) {0.8};
+    \node[left, font=\scriptsize] at (0,6.0) {1.0};
+    
+    % X-axis labels
+    \foreach \x in {1,...,10}
+        \node[below, font=\scriptsize] at (\x,0) {\x};
+    
+    % Threshold line
+    \draw[dashed, red!70!black, thick] (0,5.7) -- (10.5,5.7);
+    \node[right, font=\scriptsize, red!70!black] at (10.5,5.7) {$\theta = 0.95$};
+    
+    % True PA trajectory (converges up)
+    \draw[blue!70!black, very thick] plot[smooth] coordinates {
+        (1,0.72) (2,1.44) (3,2.4) (4,3.36) (5,4.2) (6,4.8) (7,5.28) (8,5.52) (9,5.7) (10,5.82)
+    };
+    \foreach \x/\y in {1/0.72, 2/1.44, 3/2.4, 4/3.36, 5/4.2, 6/4.8, 7/5.28, 8/5.52, 9/5.7, 10/5.82}
+        \fill[blue!70!black] (\x,\y) circle (2.5pt);
+    
+    % False positive trajectory (reverts)
+    \draw[orange!80!black, very thick, dashed] plot[smooth] coordinates {
+        (1,1.08) (2,1.8) (3,1.92) (4,1.56) (5,1.08) (6,0.84) (7,0.72) (8,0.6) (9,0.54) (10,0.48)
+    };
+    \foreach \x/\y in {1/1.08, 2/1.8, 3/1.92, 4/1.56, 5/1.08, 6/0.84, 7/0.72, 8/0.6, 9/0.54, 10/0.48}
+        \fill[orange!80!black] (\x,\y) circle (2.5pt);
+    
+    % Null responder trajectory (flat low)
+    \draw[gray, thick, dotted] plot[smooth] coordinates {
+        (1,0.36) (2,0.42) (3,0.3) (4,0.48) (5,0.36) (6,0.3) (7,0.42) (8,0.36) (9,0.3) (10,0.36)
+    };
+    
+    % Legend
+    \node[right, font=\scriptsize, blue!70!black] at (6.5,3.0) {\textbf{--- True PA}};
+    \node[right, font=\scriptsize, orange!80!black] at (6.5,2.4) {\textbf{- - Phase 1 false positive}};
+    \node[right, font=\scriptsize, gray] at (6.5,1.8) {\textbf{$\cdots$ Null responder}};
+\end{tikzpicture}
+\caption{Bayesian posterior convergence across sessions. True persistent anomalies (blue) exhibit monotonically increasing posterior probability, crossing the $\theta = 0.95$ threshold by session 9. Phase 1 false positives (orange dashed) initially elevate but revert toward baseline. Null responders (gray dotted) remain near chance throughout.}
+\label{fig:convergence}
+\end{figure}
+
+\subsubsection{Phase 3: Characterization via Anomaly Detection}
+
+Participants meeting the Phase 2 threshold undergo characterization using density-based spatial clustering of applications with noise (DBSCAN) and supervised machine learning models.
+
+DBSCAN identifies the geometric structure of anomalous response patterns in high-dimensional feature space, distinguishing between dense clusters (shared intuitive signatures) and sparse outliers (idiosyncratic anomalous patterns). The algorithm classifies each response vector as \textit{core} (within a dense cluster), \textit{border} (edge of cluster), or \textit{noise} (isolated outlier):
+
+\begin{equation}
+\text{DBSCAN}(\mathbf{r}_i; \varepsilon, \text{MinPts}) \rightarrow \{C_1, C_2, \ldots, C_k, \text{Noise}\}
+\label{eq:dbscan}
+\end{equation}
+
+where $\varepsilon$ is estimated via the $k$-distance graph method \cite{ester1996} and MinPts $= \dim(\mathbf{r}) + 1$.
+
+This characterization enables \textbf{subtyping}: persistent anomalies may exhibit distinct intuitive modalities---temporal prediction, spatial pattern detection, causal inference---that are operationally relevant for deployment decisions.
+
+\subsection{Feature Engineering}
+
+Eleven features are extracted from each participant's multi-session response data---six conventional signal features and five noise-as-feature dimensions (Section~3.3):
+
+\begin{table}[h]
+\centering
+\caption{Extended discrimination features for persistent anomaly classification. Features F1--F6 are conventional signal-based metrics; N1--N5 are noise-as-feature dimensions that detect structure in error.}
+\label{tab:features}
+\begin{tabular}{@{}cllll@{}}
+\toprule
+& \textbf{Feature} & \textbf{Measures} & \textbf{Computation} & \textbf{Range} \\
+\midrule
+F1 & Response Consistency & Cross-session stability & $\rho(\mathbf{r}^{(t)}, \mathbf{r}^{(t')})$ & $[-1, 1]$ \\
+F2 & Cross-Session Entropy & Predictability & $H(\mathbf{r})$ & $[0, \log M]$ \\
+F3 & Cluster Convergence & Membership stability & $\text{Stability}(i)$ & $[0, 1]$ \\
+F4 & Mahalanobis Distance & Null centroid deviation & $d_M(\mathbf{r}_i, \boldsymbol{\mu}_0)$ & $[0, \infty)$ \\
+F5 & Bayesian Posterior & Cumulative evidence & $P(\theta_i = 1 \mid \mathbf{D})$ & $[0, 1]$ \\
+F6 & DBSCAN Density & Local cluster density & $\rho_\varepsilon(\mathbf{r}_i)$ & $[0, \infty)$ \\
+\midrule
+N1 & Temporal Asymmetry & Pre-stimulus deviation & $A_i = \max_\tau I(R_t; S_{t+\tau})$ & $[0, \infty)$ \\
+N2 & Error Directionality & Bias vector magnitude & $D_{\text{KL}}(\hat{p}(\mathbf{e}_i) \| p_{\text{null}})$ & $[0, \infty)$ \\
+N3 & Context Variance & Load modulation & $V_i = \sigma^2_{\text{high}} / \sigma^2_{\text{low}}$ & $(0, \infty)$ \\
+N4 & Cross-Task Coherence & Transfer signature & $\bar{\rho}_{\text{CCA}}$ across tasks & $[0, 1]$ \\
+N5 & Heavy Tails & Excess coincidences & $\hat{\alpha}$ (stable index) & $(0, 2]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+% 4. MATHEMATICAL FOUNDATIONS
+% ============================================================
+\section{Mathematical Foundations}
+
+\subsection{Bayesian Model}
+
+\subsubsection{Likelihood Ratio Test}
+
+The discrimination between persistent anomaly ($H_1$) and null responder ($H_0$) can be expressed as a cumulative likelihood ratio:
+
+\begin{equation}
+\Lambda_T(i) = \prod_{t=1}^{T} \frac{P(\mathbf{D}_t \mid \theta_i = 1)}{P(\mathbf{D}_t \mid \theta_i = 0)} = \prod_{t=1}^{T} \frac{\prod_{j=1}^{N} \hat{p}_{c(i),j}(r_{ij}^{(t)})}{M^{-N}}
+\label{eq:lr}
+\end{equation}
+
+The log-likelihood ratio accumulates across sessions:
+\begin{equation}
+\ell_T(i) = \sum_{t=1}^{T} \sum_{j=1}^{N} \left[ \log \hat{p}_{c(i),j}(r_{ij}^{(t)}) + \log M \right]
+\end{equation}
+
+For true persistent anomalies, $\ell_T \to +\infty$ as $T \to \infty$. For null responders, $\mathbb{E}[\ell_T] \leq 0$ with $\ell_T / T \to D_{\text{KL}}(\text{Uniform} \| \hat{p}) \leq 0$.
+
+\subsubsection{Prior Specification}
+
+The prior $P(\theta_i = 1)$ is initialized at the empirical base rate observed in Phase 1 screening:
+
+\begin{equation}
+P(\theta_i = 1) = \pi_0 = \frac{|\{i : \text{Stability}(i) > \tau_s\}|}{N_{\text{cohort}}}
+\end{equation}
+
+Typical values: $\pi_0 \in [0.05, 0.15]$ depending on screening cohort and stability threshold $\tau_s$.
+
+\subsection{Noise Dimension Formalizations}
+
+The five noise dimensions introduced in Section~3.3 require formal mathematical treatment. Each dimension extracts a distinct form of structure from the error residuals $\mathbf{e}_i^{(t)} = \mathbf{r}_i^{(t)} - \boldsymbol{\mu}_0$, where $\boldsymbol{\mu}_0$ is the null (uniform) expectation.
+
+\subsubsection{N1: Temporal Asymmetry --- Anticipatory Mutual Information}
+
+The strongest discriminator is temporal asymmetry: the presence of response deviation that clusters \textit{before} external stimuli rather than after (Figure~\ref{fig:temporal}). Define the anticipatory mutual information:
+
+\begin{equation}
+A_i(\tau) = I(R_t^{(i)}; S_{t+\tau}) = \sum_{r,s} p(r,s;\tau) \log \frac{p(r,s;\tau)}{p(r) \cdot p(s)}, \quad \tau > 0
+\label{eq:ami}
+\end{equation}
+
+where $R_t^{(i)}$ is participant $i$'s response at trial $t$, $S_{t+\tau}$ is the stimulus presented $\tau$ trials later, and the joint distribution $p(r,s;\tau)$ is estimated empirically across trials. The scalar anticipatory feature is:
+
+\begin{equation}
+A_i = \max_{\tau \in [1, \tau_{\max}]} A_i(\tau)
+\end{equation}
+
+Under the null hypothesis (no anticipatory capability), $A_i(\tau) \to 0$ for all $\tau > 0$ as trial count increases. Significance is assessed via permutation testing: stimulus sequences are shuffled $B = 10{,}000$ times to generate a null distribution $\{A_i^{*(b)}\}_{b=1}^{B}$, and the empirical $p$-value is $\hat{p} = |\{b : A_i^{*(b)} \geq A_i\}| / B$.
+
+The critical distinction (Figure~\ref{fig:temporal}c) is that post-stimulus mutual information $I(R_t; S_{t-\tau})$ for $\tau > 0$ is explainable by memory, priming, and conventional cognitive processing. Pre-stimulus mutual information is not. This makes N1 the single most diagnostic feature: it cannot be produced by any known mechanism operating within standard causal order \cite{mossbridge2012,radin2004}. The phenomenon has been reported in controlled laboratory settings \cite{bem2011}, though replication attempts have yielded mixed results \cite{galak2012}---a pattern consistent with the framework's prediction that such effects are intermittent, context-sensitive, and detectable only through the iterative multi-session methodology proposed here rather than single-session designs.
+
+% ============================================================
+% FIGURE: Temporal Asymmetry Detection
+% ============================================================
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.62, every node/.style={transform shape}]
+
+% === PANEL (a): Temporal deviation plot ===
+\node[font=\small\bfseries] at (-6.5, 7.8) {(a) Temporal Deviation Profile};
+
+\draw[thick,->] (-10.5, 4) -- (-2.2, 4) node[below, font=\small] {Time (trial index)};
+\draw[thick,->] (-10.5, 4) -- (-10.5, 7.5) node[left, rotate=90, anchor=south, font=\small] {$|r_i - \mu_0|$};
+
+\foreach \x in {-9, -7, -5, -3.5} {
+    \draw[dashed, red!70!black, thick] (\x, 4) -- (\x, 7.3);
+}
+\node[above, font=\tiny, red!70!black] at (-9, 7.3) {$S_1$};
+\node[above, font=\tiny, red!70!black] at (-7, 7.3) {$S_2$};
+\node[above, font=\tiny, red!70!black] at (-5, 7.3) {$S_3$};
+\node[above, font=\tiny, red!70!black] at (-3.5, 7.3) {$S_4$};
+
+\draw[gray, thick, dotted] plot[smooth] coordinates {
+    (-10.2,4.3) (-9.8,4.4) (-9.5,4.25) (-9.2,4.35) (-9,4.3)
+    (-8.8,4.4) (-8.5,4.3) (-8.2,4.35) (-8,4.25) (-7.8,4.3)
+    (-7.5,4.4) (-7.2,4.3) (-7,4.35) (-6.8,4.25) (-6.5,4.3)
+    (-6.2,4.4) (-6,4.3) (-5.8,4.35) (-5.5,4.25) (-5.2,4.3)
+    (-5,4.35) (-4.8,4.25) (-4.5,4.3) (-4.2,4.4) (-4,4.3)
+    (-3.8,4.35) (-3.5,4.3) (-3.2,4.25) (-3,4.4) (-2.8,4.3)
+};
+
+\draw[blue!70!black, very thick] plot[smooth] coordinates {
+    (-10.2,4.5) (-10,4.6) (-9.7,5.4) (-9.4,6.2) (-9.2,6.8) (-9,5.0)
+    (-8.8,4.7) (-8.5,4.5) (-8.2,4.6) (-7.7,5.2) (-7.4,6.0) (-7.2,6.5) (-7,4.8)
+    (-6.8,4.6) (-6.5,4.5) (-6.2,4.6) (-5.7,5.0) (-5.4,5.8) (-5.2,6.4) (-5,4.9)
+    (-4.8,4.6) (-4.5,4.5) (-4.2,4.7) (-4.0,5.3) (-3.8,6.1) (-3.6,6.6) (-3.5,5.1)
+    (-3.3,4.7) (-3,4.5) (-2.8,4.6)
+};
+
+\foreach \x in {-9, -7, -5, -3.5} {
+    \fill[blue!10, opacity=0.5] (\x-0.8, 4) rectangle (\x, 7.2);
+}
+
+\node[right, font=\scriptsize, blue!70!black] at (-4.2, 6.9) {\textbf{--- PA subject}};
+\node[right, font=\scriptsize, gray] at (-4.2, 6.5) {\textbf{$\cdots$ Null responder}};
+\fill[blue!10, opacity=0.7] (-4.2, 6.0) rectangle (-3.8, 6.25);
+\node[right, font=\scriptsize] at (-3.7, 6.12) {Pre-stimulus window};
+
+\node[left, font=\tiny] at (-10.5, 4) {0};
+\node[left, font=\tiny] at (-10.5, 5.5) {$\sigma$};
+\node[left, font=\tiny] at (-10.5, 7) {$2\sigma$};
+
+% === PANEL (b): Anticipatory Mutual Information ===
+\node[font=\small\bfseries] at (3.5, 7.8) {(b) Anticipatory Mutual Information};
+
+\draw[thick,->] (0.5, 4) -- (8.5, 4) node[below, font=\small] {Lag $\tau$};
+\draw[thick,->] (0.5, 4) -- (0.5, 7.5) node[left, rotate=90, anchor=south, font=\small] {$I(R_t; S_{t+\tau})$};
+
+\draw[red!70!black, thick, dashed] (4.5, 3.8) -- (4.5, 7.3);
+\node[below, font=\scriptsize, red!70!black] at (4.5, 3.8) {$\tau = 0$};
+\node[below, font=\tiny] at (2.5, 3.6) {post-stimulus ($\tau < 0$)};
+\node[below, font=\tiny] at (6.5, 3.6) {pre-stimulus ($\tau > 0$)};
+
+\draw[gray, thick, dotted] plot[smooth] coordinates {
+    (1,4.1) (1.5,4.15) (2,4.08) (2.5,4.12) (3,4.1) (3.5,4.15) 
+    (4,4.1) (4.5,4.12) (5,4.1) (5.5,4.08) (6,4.15) (6.5,4.1) 
+    (7,4.12) (7.5,4.08) (8,4.1)
+};
+
+\draw[blue!70!black, very thick] plot[smooth] coordinates {
+    (1,5.2) (1.5,5.5) (2,5.8) (2.5,6.0) (3,6.2) (3.5,6.4) 
+    (4,6.5) (4.5,6.6) (5,6.8) (5.5,6.5) (6,6.0) (6.5,5.5) 
+    (7,5.0) (7.5,4.7) (8,4.5)
+};
+
+\fill[blue!10, opacity=0.5] (4.5, 4) -- (4.5, 6.6) 
+    plot[smooth] coordinates {(4.5,6.6) (5,6.8) (5.5,6.5) (6,6.0) (6.5,5.5) (7,5.0) (7.5,4.7) (8,4.5)}
+    -- (8, 4) -- cycle;
+
+\draw[dashed, orange!80!black] (0.5, 4.5) -- (8.5, 4.5);
+\node[right, font=\tiny, orange!80!black] at (8.0, 4.7) {$I_{\text{crit}}$};
+
+\draw[{Stealth[length=2mm]}-,thick, blue!60!black] (5.2, 6.9) -- (6.8, 7.3) 
+    node[right, font=\scriptsize, text width=6em] {Anticipatory\\leakage};
+
+% === PANEL (c): Key Distinction ===
+\node[font=\small\bfseries] at (0, 2.5) {(c) Diagnostic Criterion};
+
+\node[rectangle, draw, fill=red!8, text width=13em, rounded corners, 
+      inner sep=6pt, font=\scriptsize] (post) at (-5, 0.8) {
+    \textbf{Post-stimulus}\\$I(R_t; S_{t-\tau}) > 0$\\Explainable by memory,\\priming, learning\\[2pt]\textit{Not diagnostic}
+};
+
+\node[rectangle, draw=blue!60!black, fill=blue!8, text width=13em, rounded corners, 
+      inner sep=6pt, font=\scriptsize, line width=0.8pt] (pre) at (5, 0.8) {
+    \textbf{Pre-stimulus}\\$I(R_t; S_{t+\tau}) > 0$\\Not explainable by known\\cognitive mechanisms\\[2pt]\textit{Diagnostic: information leakage}
+};
+
+\draw[-{Stealth[length=2.5mm]}, very thick, gray] (post.east) -- 
+    node[above, font=\scriptsize\itshape] {temporal inversion} (pre.west);
+
+\end{tikzpicture}
+\caption{Temporal asymmetry detection. (a)~PA subjects show deviation spikes in pre-stimulus windows (blue shading), while null responders remain flat. (b)~Anticipatory mutual information peaks at positive lag ($\tau > 0$), indicating pre-stimulus structure (shaded). (c)~The diagnostic criterion: pre-stimulus correlation cannot be explained by conventional cognitive mechanisms.}
+\label{fig:temporal}
+\end{figure}
+
+\subsubsection{N2: Error Directional Bias}
+
+For each participant, the error residual vector across $T$ sessions is:
+\begin{equation}
+\mathbf{e}_i^{(t)} = \mathbf{r}_i^{(t)} - \boldsymbol{\mu}_0
+\end{equation}
+
+Under the null hypothesis, $\mathbb{E}[\mathbf{e}_i^{(t)}] = \mathbf{0}$. The directional bias vector aggregates error across sessions:
+\begin{equation}
+\mathbf{b}_i = \frac{1}{T} \sum_{t=1}^{T} \mathbf{e}_i^{(t)}
+\end{equation}
+
+The noise feature is the KL divergence between the observed error distribution and the symmetric null:
+\begin{equation}
+D_i = D_{\text{KL}}\left( \hat{p}(\mathbf{e}_i) \;\|\; p_{\text{null}}(\mathbf{e}) \right)
+\end{equation}
+
+where $p_{\text{null}}$ is the uniform error distribution. Persistent directional bias ($\|\mathbf{b}_i\| > 0$ across sessions) indicates that errors are not random but carry consistent information content---a hallmark of structured noise.
+
+\subsubsection{N3: Context-Modulated Variance}
+
+If noise carries information, its statistical properties should respond to context. The framework models participant variance as a function of contextual load $C_t$ (cognitive difficulty, emotional arousal, environmental factors) using a conditional heteroscedasticity model with exogenous regressors, inspired by GARCH-family models from financial econometrics \cite{bollerslev1986}:
+\begin{equation}
+\sigma_i^2(C_t) = \omega_i + \beta_i \cdot C_t + \gamma_i \cdot \sigma_i^2(C_{t-1})
+\label{eq:garch}
+\end{equation}
+
+This formulation captures two phenomena: (1)~variance that scales with contextual load ($\beta_i \neq 0$) and (2)~variance that persists across time ($\gamma_i \neq 0$). Note that unlike standard GARCH, the second term depends on an exogenous context variable rather than a lagged squared residual---reflecting the hypothesis that noise variance is modulated by experimental conditions, not merely self-exciting.
+
+The noise feature is the conditional variance ratio:
+\begin{equation}
+V_i = \frac{\text{Var}(\mathbf{e}_i \mid C_t > C_{\text{median}})}{\text{Var}(\mathbf{e}_i \mid C_t \leq C_{\text{median}})}
+\end{equation}
+
+For null responders, $V_i \approx 1$. For persistent anomalies, $V_i \neq 1$---noise responds to context.
+
+\subsubsection{N4: Cross-Task Coherence}
+
+If a participant's anomalous signature reflects an underlying cognitive process rather than task-specific strategy, it should transfer across unrelated task domains. Given $K$ task types, the cross-task coherence for participant $i$ is measured via canonical correlation between anomaly signatures:
+\begin{equation}
+\rho_i = \frac{1}{\binom{K}{2}} \sum_{k < l} \text{CCA}_1(\mathbf{e}_i^{(k)}, \mathbf{e}_i^{(l)})
+\end{equation}
+
+where $\text{CCA}_1$ is the first canonical correlation coefficient between error vectors from tasks $k$ and $l$. Under the null hypothesis (independent noise across tasks), $\rho_i \to 0$. Persistent anomalies exhibit $\rho_i > 0$: their noise signatures are correlated across tasks they should not be able to connect.
+
+\subsubsection{N5: Heavy-Tail Analysis}
+
+Null responders produce error distributions well-described by Gaussian (thin-tailed) models. Persistent anomalies may produce excess extreme responses---more coincidences, larger deviations, and heavier tails than Gaussian prediction allows. The framework fits $\alpha$-stable distributions \cite{nolan2020} to error residuals:
+\begin{equation}
+\hat{\alpha}_i = \arg\max_{\alpha \in (0, 2]} \mathcal{L}(\alpha \mid \{\mathbf{e}_i^{(t)}\}_{t=1}^{T})
+\end{equation}
+
+where $\alpha = 2$ corresponds to Gaussian and $\alpha < 2$ indicates heavy tails. The noise feature is $\hat{\alpha}_i$, with lower values indicating heavier tails. Significance is assessed by comparing $\hat{\alpha}_i$ against the cohort distribution of tail indices.
+
+\subsection{Information Leakage Model}
+
+The noise-as-feature paradigm can be formalized through Shannon's channel capacity framework \cite{shannon1948,cover2006}. Each participant is modeled as a noisy channel between an information source $S$ (the hidden state of the world) and an observable output $R$ (their response).
+
+The channel capacity of participant $i$ is:
+\begin{equation}
+C_i = \max_{p(S)} I(S; R_i) = \max_{p(S)} \left[ H(R_i) - H(R_i \mid S) \right]
+\label{eq:capacity}
+\end{equation}
+
+For null responders, $R_i$ is independent of $S$, so $C_i = 0$. For persistent anomalies, $C_i > 0$---their responses carry mutual information with external states.
+
+The critical insight (Figure~\ref{fig:channel}) is the \textbf{variance paradox}: a low-variance subject whose responses are statistically indistinguishable from uniform noise has $C_i \approx 0$, regardless of how ``clean'' the data appears. A high-variance subject whose deviations carry structure has $C_i > 0$. The framework therefore seeks not precision but \textbf{information leakage}---structured deviation that carries mutual information with future or hidden states:
+
+\begin{equation}
+\text{Leakage}_i = \sum_{k=1}^{5} w_k \cdot N_k(i)
+\end{equation}
+
+where $N_k(i)$ are the five noise dimension scores and $w_k$ are learned weights from the supervised classification pipeline.
+
+% ============================================================
+% FIGURE: Information Leakage Channel Model
+% ============================================================
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.62, every node/.style={transform shape}]
+
+% === PANEL (a): Two variance profiles ===
+\node[font=\small\bfseries] at (0, 8.2) {(a) Two Subjects, Same Task};
+
+\node[font=\scriptsize\bfseries] at (-5, 7.5) {Subject A: Low Variance};
+\draw[thick,->] (-8, 4.5) -- (-2.2, 4.5) node[below right, font=\tiny] {trial};
+\draw[thick,->] (-8, 4.5) -- (-8, 7.2) node[above, font=\tiny] {$r_i$};
+\draw[gray!70, thick] plot[smooth] coordinates {
+    (-7.8,5.4) (-7.5,5.5) (-7.2,5.3) (-6.9,5.6) (-6.6,5.4) (-6.3,5.5) 
+    (-6.0,5.3) (-5.7,5.6) (-5.4,5.4) (-5.1,5.5) (-4.8,5.3) (-4.5,5.6) 
+    (-4.2,5.4) (-3.9,5.5) (-3.6,5.3) (-3.3,5.5) (-3.0,5.4) (-2.7,5.5)
+};
+\draw[dashed, gray!50] (-8, 5.45) -- (-2.5, 5.45);
+\draw[decorate, decoration={brace, amplitude=3pt, mirror}, gray] 
+    (-2.3, 5.25) -- (-2.3, 5.65) node[midway, right=4pt, font=\tiny] {$\sigma_A^2$ small};
+\node[rectangle, fill=red!8, rounded corners, inner sep=4pt, font=\scriptsize] 
+    at (-5, 4.0) {$H(\mathbf{r}_A) \approx H_{\text{null}}$ --- indistinguishable from noise};
+
+\node[font=\scriptsize\bfseries] at (5, 7.5) {Subject B: High Variance};
+\draw[thick,->] (2, 4.5) -- (8.2, 4.5) node[below right, font=\tiny] {trial};
+\draw[thick,->] (2, 4.5) -- (2, 7.2) node[above, font=\tiny] {$r_i$};
+\draw[blue!70!black, thick] plot[smooth] coordinates {
+    (2.2,5.5) (2.5,5.4) (2.8,5.6) (3.0,6.4) (3.2,6.8) (3.4,5.2) (3.6,5.3) 
+    (3.8,5.5) (4.0,5.4) (4.2,5.3) (4.5,6.2) (4.7,6.9) (4.9,5.0) (5.1,5.4) 
+    (5.3,5.3) (5.5,5.5) (5.8,6.0) (6.0,6.7) (6.2,5.1) (6.4,5.3) 
+    (6.6,5.5) (6.8,5.4) (7.1,6.3) (7.3,6.8) (7.5,5.2) (7.7,5.4)
+};
+\draw[dashed, gray!50] (2, 5.45) -- (7.8, 5.45);
+\draw[decorate, decoration={brace, amplitude=5pt, mirror}, blue!60!black] 
+    (7.9, 5.0) -- (7.9, 6.9) node[midway, right=6pt, font=\tiny] {$\sigma_B^2$ large};
+\foreach \x in {3.2, 4.7, 6.0, 7.3} {
+    \draw[red!60!black, thick, -{Stealth[length=1.5mm]}] (\x, 7.1) -- (\x, 6.95);
+}
+\node[above, font=\tiny, red!60!black] at (5.1, 7.1) {periodic structure in ``error''};
+\node[rectangle, fill=blue!8, rounded corners, inner sep=4pt, font=\scriptsize, 
+      draw=blue!40!black, line width=0.4pt] 
+    at (5, 4.0) {$H(\mathbf{r}_B) \ll H_{\text{null}}$ --- \textbf{structure in noise}};
+
+% === PANEL (b): Channel capacity ===
+\node[font=\small\bfseries] at (0, 2.8) {(b) Channel Capacity Interpretation};
+
+\node[rectangle, draw, fill=gray!10, text width=5em, text centered, rounded corners,
+      minimum height=2.5em, font=\scriptsize] (srcA) at (-7, 0.5) {Source\\$S$};
+\node[rectangle, draw, fill=gray!10, text width=5em, text centered, rounded corners,
+      minimum height=2.5em, font=\scriptsize] (chA) at (-4.5, 0.5) {Subject A\\Channel};
+\node[rectangle, draw, fill=gray!10, text width=5em, text centered, rounded corners,
+      minimum height=2.5em, font=\scriptsize] (outA) at (-2, 0.5) {Response\\$R_A$};
+\draw[-{Stealth[length=2mm]}, thick] (srcA) -- (chA);
+\draw[-{Stealth[length=2mm]}, thick] (chA) -- (outA);
+\node[font=\tiny, red!60!black] at (-4.5, -0.3) {$+ \mathcal{N}(0, \sigma^2)$};
+\draw[-{Stealth[length=1.5mm]}, red!60!black] (-4.5, -0.1) -- (-4.5, 0.2);
+\node[rectangle, fill=red!8, rounded corners, inner sep=3pt, font=\scriptsize] 
+    at (-4.5, 1.7) {$C_A \approx 0$ bits/trial};
+
+\node[rectangle, draw, fill=blue!8, text width=5em, text centered, rounded corners,
+      minimum height=2.5em, font=\scriptsize] (srcB) at (3, 0.5) {Source\\$S$};
+\node[rectangle, draw=blue!50!black, fill=blue!12, text width=5em, text centered, rounded corners,
+      minimum height=2.5em, font=\scriptsize, line width=0.8pt] (chB) at (5.5, 0.5) {Subject B\\Channel};
+\node[rectangle, draw, fill=blue!8, text width=5em, text centered, rounded corners,
+      minimum height=2.5em, font=\scriptsize] (outB) at (8, 0.5) {Response\\$R_B$};
+\draw[-{Stealth[length=2mm]}, thick, blue!60!black] (srcB) -- (chB);
+\draw[-{Stealth[length=2mm]}, thick, blue!60!black] (chB) -- (outB);
+\node[font=\tiny, blue!60!black] at (5.5, -0.3) {$+ \mathcal{N}(\mathbf{b}, \sigma^2(C))$};
+\draw[-{Stealth[length=1.5mm]}, blue!60!black] (5.5, -0.1) -- (5.5, 0.2);
+\node[rectangle, fill=blue!8, draw=blue!40!black, rounded corners, inner sep=3pt, 
+      font=\scriptsize, line width=0.4pt] 
+    at (5.5, 1.7) {$C_B = I(S; R_B) > 0$ bits/trial};
+
+\end{tikzpicture}
+\caption{Information leakage channel model. (a)~Low-variance Subject~A is indistinguishable from uniform noise ($C_A \approx 0$), while high-variance Subject~B shows structured periodic deviations ($C_B > 0$). (b)~Shannon channel interpretation: Subject~B's noise is biased and context-modulated, carrying nonzero mutual information with the source. The framework seeks information leakage, not precision.}
+\label{fig:channel}
+\end{figure}
+
+\subsection{DBSCAN Parameterization}
+
+DBSCAN requires two parameters: $\varepsilon$ (neighborhood radius) and MinPts (minimum points for core status).
+
+\begin{equation}
+\varepsilon^* = \arg\max_\varepsilon \left| \frac{d^2}{d\varepsilon^2} k\text{-dist}(\varepsilon) \right|
+\end{equation}
+
+where $k$-dist$(\varepsilon)$ is the sorted $k$th-nearest-neighbor distance function. MinPts $= \dim(\mathbf{r}) + 1$ following standard practice \cite{ester1996}.
+
+\subsection{Supervised Classification}
+
+Gradient-boosted decision trees (XGBoost) are trained on feature vectors from validated persistent anomalies and matched controls. The classifier learns discriminative boundaries in the 11-dimensional feature space (Table~\ref{tab:features}), combining six conventional signal features (F1--F6) with five noise-as-feature dimensions (N1--N5).
+
+\begin{equation}
+\hat{\theta}_i = \text{XGBoost}(\mathbf{f}_i) = \sigma\left(\sum_{m=1}^{M} \eta \cdot h_m(\mathbf{f}_i)\right)
+\end{equation}
+
+Performance is evaluated using stratified $k$-fold cross-validation with AUC-ROC as the primary metric. An AUC-ROC $\geq 0.85$ is required for operational deployment.
+
+% ============================================================
+% 5. IDENTIFICATION PROTOCOL
+% ============================================================
+\section{Identification Protocol}
+
+Algorithm~\ref{alg:protocol} specifies the complete persistent anomaly identification protocol.
+
+\begin{algorithm}[t]
+\caption{Persistent Anomaly Identification Protocol}
+\label{alg:protocol}
+\begin{algorithmic}[1]
+\REQUIRE Cohort $\mathcal{C} = \{1, \ldots, N\}$, session count $T \geq 5$, thresholds $\theta_{\text{PA}} = 0.95$, $\tau_s$
+\ENSURE Classified set $\mathcal{PA} \subseteq \mathcal{C}$ with modality profiles
+\STATE \textbf{// Phase 1: Screening}
+\FOR{$t = 1$ to $T_{\text{screen}}$}
+    \STATE Administer covertly structured task variant $t$
+    \STATE Compute response vectors $\{\mathbf{r}_i^{(t)}\}_{i \in \mathcal{C}}$
+\ENDFOR
+\STATE $\mathcal{K} \leftarrow k\text{-means}(\{\mathbf{r}_i\}, K)$
+\STATE $\text{Stability}(i) \leftarrow$ cross-session cluster consistency (Eq.~4)
+\STATE $\mathcal{F} \leftarrow \{i : \text{Stability}(i) > \tau_s\}$ \COMMENT{Flagged candidates}
+\STATE
+\STATE \textbf{// Phase 2: Bayesian Validation}
+\STATE Initialize $P(\theta_i = 1) \leftarrow \pi_0$ for all $i \in \mathcal{F}$
+\FOR{$t = 1$ to $T$}
+    \STATE Administer reformulated task
+    \STATE Update posterior via Eq.~\ref{eq:bayes}
+\ENDFOR
+\STATE $\mathcal{V} \leftarrow \{i \in \mathcal{F} : P(\theta_i = 1 \mid \mathbf{D}) \geq \theta_{\text{PA}}\}$ \COMMENT{Validated PAs}
+\STATE
+\STATE \textbf{// Phase 3: Characterization}
+\STATE $\{C_1, \ldots, C_k\} \leftarrow \text{DBSCAN}(\{\mathbf{r}_i\}_{i \in \mathcal{V}}; \varepsilon^*, \text{MinPts})$
+\STATE Train XGBoost on $(\mathcal{V}, \text{controls})$ with features from Table~\ref{tab:features}
+\STATE Assign modality profiles based on cluster membership and feature importance
+\RETURN $\mathcal{PA} \leftarrow \mathcal{V}$ with profiles
+\end{algorithmic}
+\end{algorithm}
+
+% ============================================================
+% FIGURE 4: Comparison Table
+% ============================================================
+\begin{table*}[t]
+\centering
+\caption{Comparison of identification methodologies across three paradigms. The proposed framework differs from both historical psi research and conventional psychometric assessment.}
+\label{tab:comparison}
+\small
+\begin{tabular}{@{}p{2.5cm}p{3.8cm}p{3.8cm}p{4.2cm}@{}}
+\toprule
+\textbf{Dimension} & \textbf{Stargate-Era} & \textbf{Conventional Psychometric} & \textbf{Proposed Framework} \\
+\midrule
+Assessment Design & Structured tasks with known targets & Structured tasks with known correct answers & Covertly structured tasks with hidden ground truth \\[4pt]
+What is Measured & Conscious report accuracy & Conscious final answers & Four-layer behavioral stream (motor, selection, override, response) \\[4pt]
+Signal Model & Clean signal in response & Clean signal in response & Structure in noise; information leakage \\[4pt]
+Session Count & Single or limited & Single session (standardized) & Minimum 5 iterative sessions \\[4pt]
+Statistical Method & Frequentist hypothesis testing & Item response theory (IRT) & Bayesian posterior + 5 noise dimensions + differential pair accuracy \\[4pt]
+False Positive Control & Limited (single-session) & Norm-referenced & Iterative convergence + 11-dim feature space \\[4pt]
+Scalability & Manual, $O(1)$ experts & Automated, $O(N)$ & Automated, $O(N)$ + embedded deployment \\[4pt]
+Retrocausal testable? & No & No & Yes (historical data scoring) \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% ============================================================
+% PRELIMINARY SYNTHETIC EXPERIMENT
+% ============================================================
+\section{Preliminary Synthetic Experiment}
+
+To verify that the pipeline architecture functions as specified before empirical deployment, we conducted a synthetic pilot simulation. This experiment does not test whether anomalous cognition exists; it tests whether the framework can recover injected anomalies from a population of null responders using the methods described in Sections~3--5.
+
+\subsection{Design}
+
+A synthetic cohort of $N = 200$ subjects was generated, each completing $T = 5$ sessions of $K = 100$ items with $M = 4$ response options. Eight subjects were designated as true persistent anomalies with injected effect sizes spanning $d \in \{0.08, 0.10, 0.12, 0.15, 0.18, 0.20, 0.22, 0.25\}$. The remaining 192 subjects responded uniformly at random ($p = 0.25$ per item).
+
+Anomaly injection included three components: (1) elevated accuracy toward the hidden answer key at the designated effect size; (2) a conscious override model in which 30\% of initially correct selections were changed to incorrect responses, simulating the override phenomenon (Eq.~\ref{eq:override}); and (3) faster response times on items where the initial selection matched the hidden key. Null subjects received purely random responses, initial selections, and response times.
+
+All 11 features (Table~\ref{tab:features}) were extracted from each subject's multi-session data. The three-phase pipeline was executed: $k$-means screening (Phase 1), Bayesian posterior validation with threshold $P \geq 0.95$ (Phase 2), and DBSCAN + XGBoost characterization (Phase 3). Results were averaged across 5 random seeds.
+
+\subsection{Results}
+
+\begin{table}[h]
+\centering
+\caption{Synthetic pilot results averaged across 5 seeds. The Bayesian threshold is conservative: it reliably detects anomalies with $d \geq 0.15$ but misses weaker effects, consistent with the power analysis in Section~11.2. XGBoost is trained and evaluated on the same data; the reported AUC = 1.000 is an upper bound on generalization performance.}
+\label{tab:synthetic}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Classifier} & \textbf{Sensitivity} & \textbf{Specificity} & \textbf{AUC} \\
+\midrule
+Bayesian threshold ($P \geq 0.95$) & $0.575 \pm 0.100$ & $1.000 \pm 0.000$ & $0.971 \pm 0.030$ \\
+XGBoost (11-dim features) & $0.925 \pm 0.065$ & $1.000 \pm 0.000$ & $1.000 \pm 0.000$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three findings are noteworthy:
+
+\textbf{Zero false positives.} Across all seeds, the maximum Bayesian posterior for any null subject was 0.003---far below the 0.95 classification threshold. The framework's specificity guarantee holds: the iterative Bayesian accumulation model does not produce false identifications under the stated threshold.
+
+\textbf{Sensitivity tracks effect size.} Injected anomalies with $d \geq 0.15$ were reliably detected (posterior $> 0.95$ in all seeds). Anomalies with $d \in \{0.08, 0.10, 0.12\}$ were not detected by the Bayesian threshold, consistent with the power analysis (Section~11.2) which predicts that $d = 0.15$ requires $N = 350$ trials for 80\% power---and the synthetic subjects completed only 500 total trials (5 sessions $\times$ 100 items). The XGBoost classifier, operating on the full 11-dimensional feature space, recovered even weaker anomalies, though this result is an upper bound since the classifier was trained and evaluated on the same data without a held-out test set.
+
+\textbf{Noise features carry discriminative signal.} XGBoost feature importance analysis shows that N2 (error directionality) is the second most important feature ($0.309 \pm 0.262$), after F6 (mean accuracy). This directly validates the noise-as-feature paradigm: structure in \textit{errors}---not just accuracy---carries substantial discriminative information that conventional assessment discards.
+
+\subsection{Limitations of the Synthetic Experiment}
+
+This experiment is a proof-of-concept, not empirical validation. It demonstrates that the pipeline architecture recovers injected signal as designed, but it does not demonstrate that real human subjects produce the injected signal patterns. The override model is simplified (fixed 30\% rate), temporal asymmetry is approximated, and XGBoost is trained and evaluated on the same data (the reported AUC = 1.000 is therefore an upper bound). Full empirical validation requires the preregistered pilot study specified in Section~11.3.
+
+% ============================================================
+% 6. ETHICAL FRAMEWORK
+% ============================================================
+\section{Ethical Framework}
+
+The identification of persistent anomalies involves the collection and analysis of cognitive response data that raises significant ethical considerations.
+
+\subsection{Informed Consent}
+
+Participants must be informed of the general purpose (cognitive research), the nature of the tasks (covertly structured response exercises), and the disposition of their data (anonymized storage, authorized access only). In contexts where full purpose disclosure would compromise the assessment---by enabling conscious strategy development that defeats the covert structure---partial disclosure is permissible provided that: (a) participants are informed that full debriefing will occur post-assessment; (b) no deception regarding personal risk or data use occurs; and (c) the protocol has been reviewed by an independent ethics committee.
+
+\subsection{Data Protection}
+
+All response data is anonymized at collection using irreversible hashing. Participant identifiers are stored separately from response data in encrypted databases with access restricted to authorized research personnel. Data retention follows the minimum necessary principle.
+
+\subsection{Oversight and Accountability}
+
+An independent review board evaluates all assessment protocols prior to implementation, monitors data handling practices, and adjudicates participant concerns. The review board includes representatives from ethics, law, cognitive science, statistics, and participant advocacy, and must include at least one external statistician with no affiliation to the research team. All analysis plans must be preregistered before data collection begins. Independent scoring teams with no access to participant identifiers must verify results before any classification decision is finalized.
+
+\subsection{Participant Welfare and Hard Limits}
+
+\begin{definition}[Non-Coercion Principle]
+Persistent anomaly identification must not result in coercion, exploitation, or stigmatization. Individuals identified as persistent anomalies retain full autonomy regarding participation in any subsequent program. Identification confers no obligation and creates no compulsory status.
+\end{definition}
+
+The following constraints are non-negotiable:
+
+\begin{enumerate}[nosep]
+    \item \textbf{No adverse personnel consequence from a single classification result.} No individual may be reassigned, promoted, denied opportunity, or otherwise affected based solely on persistent anomaly classification without independent replication.
+    \item \textbf{No operational deployment before independent replication.} The framework must be validated through preregistered pilot studies and independently replicated at a minimum of two sites before any operational application.
+    \item \textbf{Mandatory debriefing.} Where lawful and feasible, participants must receive full debriefing including disclosure of the covert structure, their classification status (if requested), and the disposition of their data.
+    \item \textbf{Strict separation of research and career decisions.} Research classification databases must be architecturally separated from personnel management systems. No classification result may enter a personnel file without the participant's informed, written consent.
+    \item \textbf{Right to withdrawal and data deletion.} Participants may withdraw at any time and request deletion of all personally identifiable response data.
+\end{enumerate}
+
+% ============================================================
+% 7. APPLICATIONS
+% ============================================================
+\section{Post-Validation Applications}
+
+The following applications are contingent on successful empirical validation per the roadmap in Section~11. None are justified by the current paper alone.
+
+\subsection{Personnel Selection}
+
+If validated, the framework could provide an empirical basis for integrating persistent anomalies into analytical teams where intuitive capabilities complement conventional methods. Phase 3 characterization would enable matching of specific intuitive modalities to operational requirements: temporal prediction to threat anticipation, spatial pattern detection to geospatial analysis, causal inference to strategic planning. Any such deployment would require independent replication and the ethical safeguards specified in Section~7.
+
+\subsection{Predictive Analysis Enhancement}
+
+Validated persistent anomalies could serve as inputs to hybrid predictive models integrating human intuitive judgments with algorithmic analysis. The human-machine ensemble approach has demonstrated superior predictive accuracy in forecasting tournaments where neither human nor algorithmic judgment alone achieves optimal performance \cite{tetlock2015}.
+
+\subsection{High-Stakes Decision Support}
+
+In operational contexts characterized by ambiguity, time pressure, and incomplete information---conditions that degrade algorithmic performance---validated persistent anomalies could provide a complementary decision support capability, subject to the non-coercion and separation-of-concerns constraints specified in Section~7.
+
+% ============================================================
+% FIGURE 5: Framework Integration
+% ============================================================
+% OPERATIONAL EXTENSIONS
+% ============================================================
+\section{Operational Extensions}
+
+The core methodology (Sections~3--5) is self-contained as a laboratory screening protocol. This section describes how the framework extends to embedded deployment and retrospective archival testing. These extensions are downstream of empirical validation (Section~11) and are not prerequisites for evaluating the framework's scientific claims.
+
+\subsection{Embedded Deployment Contexts}
+
+The framework achieves maximum statistical power when embedded within standardized assessments that subjects are already taking. Military aptitude batteries (e.g., ASVAB), officer selection examinations, and standardized educational tests provide natural deployment vehicles: subjects are cognitively engaged, test-taking infrastructure is established, behavioral monitoring via computer-administered testing is standard, and large cohorts are available. Answer-pattern encoding (Section~3.4) requires no modification to existing test content---only a secondary scoring key applied post-administration.
+
+A 200-item standardized test produces up to 99 adjacent pairs. With $|\mathcal{P}_D| = 30$ designated pairs per session and $N \approx 600{,}000$ annual ASVAB test-takers, embedded deployment yields $\sim 3.6 \times 10^7$ pair trials per year---sufficient to detect effect sizes as small as $d = 0.01$ with high power.
+
+\subsection{Ethical Constraints on Embedded Deployment}
+
+Embedded psi screening raises ethical concerns qualitatively different from laboratory research:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Consent for secondary use.} Subjects consenting to a standardized test have not consented to psi screening. The ethical permissibility of secondary scoring depends on whether psi screening constitutes ``research'' or ``operational evaluation'' under relevant institutional frameworks.
+    \item \textbf{Identification consequences.} In military contexts, identification as a persistent anomaly may trigger recruitment, surveillance, or both. The non-coercion principle (Definition~4) and the hard limits in Section~7 must be enforced at the institutional level.
+    \item \textbf{Governance gap.} The ethical framework in Section~7 addresses laboratory-scale research; population-scale deployment requires governance structures that do not yet exist. These structures must be developed \textit{before} deployment, not after.
+\end{enumerate}
+
+\subsection{Speculative Extension: Retrocausal Testing via Historical Data}
+
+The answer-pattern encoding methodology enables an experimental paradigm that, while speculative, is included here because it is \textit{directly testable with existing data} and requires no new subjects or infrastructure. Decades of standardized test responses reside in institutional data repositories containing complete item-level response vectors with timestamps and scoring keys for millions of subjects. The question is whether behavioral output from the past carries statistical dependencies with scoring keys generated in the future.
+
+The experimental protocol is:
+
+\begin{enumerate}[nosep]
+    \item Obtain a historical response dataset $\mathcal{D}_{\text{hist}}$ containing item-level responses from time $t_{\text{past}}$.
+    \item At time $t_{\text{now}} > t_{\text{past}}$, generate a psi scoring key $\mathbf{A}^*_{\text{psi}}$ designating answer-pattern trials within the historical test structure.
+    \item Score $\mathcal{D}_{\text{hist}}$ against $\mathbf{A}^*_{\text{psi}}$ using the pair-accuracy metric (Eq.~\ref{eq:pairnull}).
+    \item Compare observed pair accuracy against the null baseline computed from subjects' known item-level performance.
+\end{enumerate}
+
+The critical feature: \textbf{the psi key did not exist when the subjects responded}. Any above-chance pair accuracy on designated trials in historical data scored against a future-generated key cannot be explained by any forward-causal mechanism.
+
+\subsubsection{Experimental Controls}
+
+\textbf{Control 1: Multiple independent keys.} Generate $K = 1{,}000$ random psi keys, each designating different subsets of item pairs. Score $\mathcal{D}_{\text{hist}}$ against all $K$ keys. Under $H_0$, all keys produce pair accuracy consistent with the null baseline. The designated key is selected through pre-registration. If the designated key produces elevated accuracy while the $K - 1$ controls do not, the experiment has $K - 1$ built-in replications:
+
+\begin{equation}
+\text{Retrocausal Index} = \frac{\delta_{\text{designated}} - \mu(\{\delta_k\}_{k=1}^{K})}{\sigma(\{\delta_k\}_{k=1}^{K})}
+\label{eq:retro}
+\end{equation}
+
+where $\delta_k$ is the pair accuracy deviation for key $k$. Under $H_0$, the retrocausal index is distributed as a standard normal.
+
+\textbf{Control 2: Temporal decay function.} Score datasets from progressively earlier time periods against the same key generated at $t_{\text{now}}$. If retrocausal influence exists, its magnitude may vary as a function of temporal separation $\Delta t = t_{\text{now}} - t_{\text{past}}$:
+
+\begin{equation}
+\delta(\Delta t) = \delta_0 \cdot f(\Delta t)
+\end{equation}
+
+where $f(\Delta t)$ is the temporal decay function. The form of $f$---exponential, power-law, constant, or oscillatory---is an empirical question.
+
+\textbf{Control 3: Frozen confound elimination.} Historical subjects cannot be affected by experimenter expectation, demand characteristics, sensory leakage, or any standard methodological criticism. Their responses are frozen in a database. The only variable under experimenter control is the key generated after the fact.
+
+\subsubsection{Implications if Retrocausal Index Is Nonzero}
+
+If the retrocausal index were significantly nonzero, the result would not constitute evidence of ``psychic ability'' but rather evidence that behavioral output and future states can be correlated under specific conditions. The magnitude, replicability, and decay profile of any such effect would determine its interpretation. The framework specifies how to test this hypothesis; it does not presuppose the outcome.
+
+% ============================================================
+% 8. DISCUSSION
+% ============================================================
+\section{Discussion}
+
+\subsection{Addressing Historical Methodological Failures}
+
+The framework addresses the primary methodological failures that limited previous investigations: single-session assessment designs, absence of iterative validation, conflation of signal and noise, and lack of formal statistical criteria. By requiring persistent deviation across multiple sessions with Bayesian convergence above a defined threshold, the framework dramatically reduces false positive rates while maintaining sensitivity to genuine capability. Table~\ref{tab:comparison} summarizes the methodological advances.
+
+Two additional innovations distinguish this framework from prior work. First, the noise-as-feature paradigm (Section~3.3) inverts the standard analytical assumption: rather than treating response variability as error to be filtered, the framework analyzes five dimensions of structure within noise, formalized through Shannon's channel capacity framework. This addresses the fundamental problem that anomalous cognition does not present as a clean, stable signal but as structured deviation buried in stochastic processes. Second, the behavioral monitoring layer (Section~3.2.1) recovers signal that the conscious mind actively suppresses. The override index (Eq.~\ref{eq:override}) captures a phenomenon invisible to final-response-only analysis: subjects who detect the correct answer intuitively and then override it consciously. These two innovations---analyzing structure in noise and recovering pre-override signal---together address the core failure mode of Stargate-era programs, which measured only conscious performance on structured tasks.
+
+\subsection{Robustness Under Non-Anomalous Interpretations}
+
+The framework's statistical methods do not depend on the resolution of the anomalous cognition debate for their utility. Under non-anomalous interpretations, the same pipeline would identify individuals with exceptional predictive intuition, anticipatory bias, high-sensitivity pattern recognition, and edge-case cognition under uncertainty---capabilities with established operational value in intelligence analysis, medical diagnosis, financial risk assessment, and crisis response \cite{norman2017,tetlock2015,mossbridge2012}. This is a design property of the framework, not its motivation.
+
+\subsection{The Noise-as-Signal Principle}
+
+The framework's core methodological move---treating structured deviation in noise as potential signal rather than error---is not unique to anomalous cognition research. The same principle operates in gravitational wave detection (LIGO extracts signal from noise floors many orders of magnitude larger than the target), in financial alpha generation (persistent excess returns are treated as evidence of genuine capability, not luck), and in fault detection systems (systematic deviations from expected sensor readings indicate hidden state changes). What is novel here is the application of this principle to human cognitive output under conditions of uncertainty, combined with iterative Bayesian validation and multi-layer behavioral monitoring that recovers pre-conscious signal typically discarded by conventional assessment.
+
+\subsection{Limitations}
+
+\begin{enumerate}
+    \item \textbf{Behavioral monitoring infrastructure.} The three-layer data model (Table~\ref{tab:behavioral}) requires computer-administered protocols with high-frequency mouse tracking. Paper-based or low-bandwidth implementations lose the motor and selection layers, reducing the framework to final-response-only analysis.
+    \item \textbf{Threshold sensitivity.} The $P \geq 0.95$ threshold is calibrated for specificity and may miss individuals whose anomalous capability is real but intermittent.
+    \item \textbf{Bootstrapping problem.} The ML classifier requires training data from validated persistent anomalies, creating a cold-start problem for initial deployment. The behavioral monitoring layer partially mitigates this by providing richer per-subject feature vectors that improve classifier performance at small sample sizes.
+    \item \textbf{Override contamination.} The conscious override phenomenon (Eq.~\ref{eq:override}) could be confounded by general response uncertainty unrelated to intuitive signal. Distinguishing override-of-correct from general indecision requires sufficiently large item counts per session.
+    \item \textbf{No human validation data yet.} The framework has been validated on synthetic data with injected signal (Section~6) but requires empirical validation with human subjects per the roadmap in Section~11.
+\end{enumerate}
+
+% ============================================================
+% 9. VALIDATION ROADMAP
+% ============================================================
+\section{Validation Roadmap}
+
+\subsection{Protocol Specification}
+
+Table~\ref{tab:protocol} specifies concrete parameters for each deployment mode. Parameters are calibrated to achieve sufficient statistical power (Section~11.2) while remaining operationally feasible.
+
+\begin{table}[h]
+\centering
+\caption{Protocol specifications by deployment mode. All modes require computer administration for behavioral monitoring.}
+\label{tab:protocol}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Parameter} & \textbf{Standalone} & \textbf{ASVAB} & \textbf{State Test} \\
+\midrule
+Items/session ($N$) & 100 & 200+ & 50--150 \\
+Options ($M$) & 4 & 4--5 & 4 \\
+Designated pairs ($|\mathcal{P}_D|$) & 30 & 30--60 & 15--45 \\
+Sessions/subject ($T$) & $\geq 5$ & 1--3 & 1--2 \\
+Mouse sampling & $\geq 60$\,Hz & $\geq 60$\,Hz & $\geq 60$\,Hz \\
+Min.\ cohort & 200 & 5{,}000 & 10{,}000 \\
+Motor layer? & Yes & Yes & Varies \\
+Selection layer? & Yes & Yes & Varies \\
+Retrocausal testbed? & No & Yes & Yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Standalone mode} maximizes per-subject signal: high item count, multiple sessions, full behavioral monitoring. Suitable for laboratory validation and military screening centers.
+
+\textbf{Embedded modes} (ASVAB, state testing) sacrifice per-subject depth for population scale. A single ASVAB session with 60 designated pairs provides $|\mathcal{P}_D| = 60$ differential pair trials per subject. With $N \approx 600{,}000$ annual ASVAB test-takers, this yields $\sim 3.6 \times 10^7$ pair trials per year.
+
+\subsection{Power Analysis}
+
+Effect size estimates are drawn from three sources: Bem (2011) reported a mean $d = 0.22$ across nine precognition experiments \cite{bem2011}; the Mossbridge meta-analysis (2012) found $d = 0.21$ across 26 anticipatory physiological response studies \cite{mossbridge2012}; and Radin (2004) reported $d \approx 0.10$--$0.25$ for electrodermal presentiment experiments \cite{radin2004}.
+
+We adopt conservative targets of $d = 0.15$ for anticipatory mutual information (N1) and $d = 0.10$ for differential pair accuracy ($\Delta_i$). Required sample sizes for $80\%$ power at $\alpha = 0.05$ (two-tailed):
+
+\begin{table}[h]
+\centering
+\caption{Power analysis: required sample sizes by effect size and measurement layer. Retrocausal testing requires population-scale data achievable with 1--2 years of ASVAB archives.}
+\label{tab:power}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Measurement} & \textbf{Effect ($d$)} & \textbf{Trials/subject} & \textbf{$N$ for 80\% power} \\
+\midrule
+Anticipatory MI (N1) & 0.15 & 100 & 350 \\
+Differential pair $\Delta_i$ & 0.10 & 60 pairs & 1{,}571 \\
+Override index ($O_i > 0$) & 0.20 & 100 & 197 \\
+Motor hover bias & 0.12 & 100 & 546 \\
+\midrule
+Retrocausal index (Eq.~\ref{eq:retro}) & 0.01 & 50 pairs & 785{,}000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The standalone protocol ($N = 200$, $T = 5$ sessions, 100 items/session) is powered for N1 and $O_i$ detection. ASVAB-embedded deployment ($N = 5{,}000$, 60 pairs/session) is powered for differential pair accuracy. The retrocausal test requires population-scale data to detect $d = 0.01$.
+
+\subsection{Phase Structure}
+
+% ============================================================
+% FIGURE: Validation Roadmap
+% ============================================================
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=0.2cm]
+    \node[phase, fill=blue!20, text width=8.5em] (p1) at (0,0) {Phase 1\\Preregistered\\Pilot};
+    \node[phase, fill=purple!20, text width=8.5em] (p2) at (4.2,0) {Phase 2\\Multi-Site\\Replication};
+    \node[phase, fill=orange!20, text width=8.5em] (p3) at (8.4,0) {Phase 3\\Limited\\Embedded Pilot};
+    \node[phase, fill=green!20, text width=8.5em] (p4) at (12.6,0) {Phase 4\\Retrospective\\Archival};
+    
+    \draw[arrow] (p1) -- (p2);
+    \draw[arrow] (p2) -- (p3);
+    \draw[arrow] (p3) -- (p4);
+    
+    \node[below=0.4cm of p1, text width=9em, font=\scriptsize, align=center] {
+        $N = 200$ standalone\\
+        5-session protocol\\
+        Full behavioral monitoring\\
+        Preregistered analysis
+    };
+    \node[below=0.4cm of p2, text width=9em, font=\scriptsize, align=center] {
+        $\geq 2$ independent sites\\
+        Adversarial leakage audit\\
+        Blinded scoring teams\\
+        Split-custody answer keys
+    };
+    \node[below=0.4cm of p3, text width=9em, font=\scriptsize, align=center] {
+        $N = 5{,}000$ embedded\\
+        Answer-pattern encoding\\
+        ML classifier training\\
+        Threshold calibration
+    };
+    \node[below=0.4cm of p4, text width=9em, font=\scriptsize, align=center] {
+        Historical data scoring\\
+        1{,}000 random key controls\\
+        Temporal decay function\\
+        Retrocausal assessment
+    };
+\end{tikzpicture}
+\caption{Four-phase validation roadmap. Phases are ordered by scientific rigor: preregistered laboratory pilot, independent multi-site replication with adversarial controls, limited embedded deployment, and retrospective archival scoring. Each phase requires successful completion of the prior phase before proceeding.}
+\label{fig:validation}
+\end{figure}
+
+\textbf{Phase 1 (Preregistered Pilot):} $N = 200$ volunteers complete the standalone protocol with full four-layer behavioral monitoring. The complete analysis plan, including all statistical tests, thresholds, and stopping rules, must be preregistered on a public registry (e.g., OSF, AsPredicted) before data collection begins. Objectives: estimate base rate of persistent anomalies, measure empirical effect sizes for N1--N5, calibrate Bayesian prior $\pi_0$, and establish override index $O_i$ distribution. Success criterion: at least one noise dimension shows $d > 0.10$ with $p < 0.01$.
+
+\textbf{Phase 2 (Independent Multi-Site Replication):} The Phase 1 protocol is replicated at a minimum of two independent sites with no personnel overlap with the originating laboratory. Replication sites receive the preregistered protocol and software but conduct data collection, scoring, and analysis independently. An adversarial leakage audit is conducted at each site to verify that no conventional information pathway connects participants to the hidden ground truth. Success criterion: effect sizes and classification rates replicate within prespecified equivalence bounds across all sites.
+
+\textbf{Phase 3 (Limited Embedded Pilot):} Answer-pattern encoding deployed within a single standardized testing context (e.g., one ASVAB processing station) with $N = 5{,}000$ subjects. Objectives: train XGBoost classifier on 11-dimensional feature space, calibrate $P \geq 0.95$ threshold, validate differential pair accuracy $\Delta_i$ at population scale. Success criterion: AUC-ROC $\geq 0.85$ on held-out test set. Deployment proceeds only after Phase 2 replication is complete and published.
+
+\textbf{Phase 4 (Retrospective Archival Scoring):} Historical standardized test archives (minimum 3 years, $N > 500{,}000$) scored against 1{,}000 randomly generated keys plus one designated key. Objectives: compute retrocausal index (Eq.~\ref{eq:retro}), estimate temporal decay function $f(\Delta t)$, assess temporal correlation hypothesis. Success criterion: designated key retrocausal index $> 3.0$ (i.e., $> 3\sigma$ above random key distribution). This phase is speculative and proceeds only if Phases 1--3 produce validated positive results.
+
+\subsection{Red-Team Controls}
+
+The framework specifies the following adversarial controls, all of which must be implemented before any classification result is treated as validated:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Split custody of answer keys.} The hidden ground truth key is generated and sealed by a party with no access to participant data. The scoring team receives sealed keys only after data collection is complete. No individual has simultaneous access to both the key and the response data during data collection.
+    \item \textbf{Preregistered analysis plans.} All statistical tests, feature engineering steps, classification thresholds, and stopping rules are registered publicly before data collection begins. Post-hoc analyses are permitted but must be labeled as exploratory and are not counted toward success criteria.
+    \item \textbf{Random-key null distributions.} Every analysis is repeated using $K = 1{,}000$ randomly generated scoring keys. The designated key's results must exceed the null distribution by prespecified margins. This provides $K - 1$ built-in negative controls per analysis.
+    \item \textbf{Leakage simulations.} Before each phase, the experimental design is subjected to adversarial leakage analysis: systematic enumeration of all conventional information pathways through which participants could access hidden ground truth, including sensory cues, task structure regularities, and experimenter demand characteristics. Each identified pathway must be either eliminated or demonstrated to produce insufficient information transfer to account for observed effects.
+    \item \textbf{Response-style null models.} Classification results are compared against null models that match participants on response-style features (response time distributions, option-position preferences, sequential dependencies) but with permuted answer keys. This controls for the possibility that response-style clustering produces spurious above-chance accuracy on specific key configurations.
+    \item \textbf{Informed-versus-naive cohorts.} A subset of Phase 2 participants are informed that some items have hidden correct answers. If informed participants show elevated performance relative to naive participants, conventional reasoning pathways are contributing to the signal, and the task design must be revised.
+    \item \textbf{Independent scoring teams.} All scoring and classification decisions are performed by teams blinded to participant identity, with results verified by an independent statistical auditor before any classification is finalized.
+\end{enumerate}
+
+\subsection{Acceptance Criteria}
+
+For operational deployment, the framework must demonstrate:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Sensitivity:} $P(\text{PA classified} \mid \text{true PA}) > 0.90$
+    \item \textbf{Specificity:} $P(\text{Null classified} \mid \text{true null}) > 0.95$
+    \item \textbf{Replicability:} Identification results consistent across independent cohorts ($\kappa > 0.80$)
+    \item \textbf{Predictive validity:} Identified PAs outperform controls in structured forecasting tasks ($p < 0.01$)
+    \item \textbf{Classifier performance:} AUC-ROC $\geq 0.85$ on held-out test set
+\end{enumerate}
+
+\subsection{Baseline Comparisons}
+
+Phase 1 validation will compare the framework against three baselines:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Random selection:} Randomly designated ``anomalies'' assessed on identical forecasting tasks. Expected: no performance advantage.
+    \item \textbf{Self-report:} Individuals self-identifying as possessing exceptional intuition. Expected: marginal performance advantage, lower specificity than the framework.
+    \item \textbf{Conventional psychometric:} Standard cognitive assessment batteries (e.g., ASVAB subtests, Wonderlic) used to select top performers. Expected: no advantage on hidden-target tasks beyond test-taking ability, which the differential pair accuracy $\Delta_i$ controls for by construction.
+\end{enumerate}
+
+Success criterion: Framework-identified PAs achieve statistically significant forecasting advantage over all three baselines ($p < 0.01$).
+
+% ============================================================
+% 10. FUTURE WORK
+% ============================================================
+\section{Future Work}
+
+Four primary research directions:
+
+\begin{enumerate}
+    \item \textbf{Neuroimaging studies.} fMRI and EEG examination of neural correlates of persistent anomaly status, with specific attention to basal ganglia connectivity patterns reported in preliminary research on individuals with anomalous experiential histories \cite{nolan2022}.
+    \item \textbf{Longitudinal tracking.} Multi-year monitoring of identified persistent anomalies to assess capability stability, developmental trajectory, and response to training interventions.
+    \item \textbf{IARPA benchmark integration.} Applying the framework within the forecasting tournament paradigm \cite{tetlock2015} to provide quantitative benchmarks against established baselines.
+    \item \textbf{Cross-domain validation.} Extending the framework to clinical diagnosis, financial risk assessment, and emergency response contexts.
+\end{enumerate}
+
+% ============================================================
+% 11. CONCLUSION
+% ============================================================
+\section{Conclusion}
+
+The historical and statistical record of anomalous cognition research is sufficient to justify a serious screening science. What has been missing is a rigorous framework for distinguishing individuals with differential access to the effect from background statistical noise at population scale. This paper proposes that framework.
+
+The core contributions are methodological: a noise-as-feature paradigm that extracts signal from structured deviation rather than response accuracy; a multi-layer behavioral monitoring system that recovers pre-conscious and pre-override signal typically discarded; iterative Bayesian accumulation that requires persistent deviation across multiple independent sessions; and answer-pattern encoding that enables embedded and retrospective deployment without alerting participants to the assessment's purpose. Together, these components transform anomalous cognition identification from a subjective enterprise into a signal detection problem with known statistical properties.
+
+The framework has not been empirically validated with human subjects. A preliminary synthetic experiment (Section~6) demonstrates that the pipeline recovers injected anomalies from a null population with zero false positives and sensitivity that tracks effect size as predicted by the power analysis---confirming that the architecture functions as specified. The validation roadmap specifies a sequence of preregistered pilot studies, independent multi-site replication with adversarial controls, and power analysis calibrated to published effect sizes. Until that validation is complete, the paper's contribution is architectural: a complete, falsifiable protocol specification that can be implemented, tested, and either confirmed or refuted through empirical data.
+
+% ============================================================
+% REFERENCES
+% ============================================================
+\section*{AI/LLM Disclosure}
+
+The theoretical framework, methodology, experimental designs, and all substantive intellectual content in this paper are the original work of the author. Claude (Anthropic) was used as an editorial tool for LaTeX formatting, figure generation, bibliography verification, and prose refinement. No AI system generated the research questions, statistical framework, noise-as-feature paradigm, or validation protocols described herein.
+
+\begin{thebibliography}{99}
+
+\bibitem{puthoff1976}
+H.\,E. Puthoff and R. Targ, ``A perceptual channel for information transfer over kilometer distances: Historical perspective and recent research,'' \textit{Proceedings of the IEEE}, vol.~64, no.~3, pp.~329--354, 1976.
+
+\bibitem{utts1996}
+J. Utts, ``An assessment of the evidence for psychic functioning,'' \textit{Journal of Scientific Exploration}, vol.~10, no.~1, pp.~3--30, 1996.
+
+\bibitem{smith2005}
+P.\,H. Smith, \textit{Reading the Enemy's Mind: Inside Star Gate, America's Psychic Espionage Program}. Tom Doherty Associates, 2005.
+
+\bibitem{air1995}
+American Institutes for Research, ``An Evaluation of Remote Viewing: Research and Applications,'' Report prepared for the Central Intelligence Agency, 1995.
+
+\bibitem{targ1977}
+R. Targ and H.\,E. Puthoff, \textit{Mind-Reach: Scientists Look at Psychic Ability}. Delacorte Press, 1977.
+
+\bibitem{kress1977}
+K.\,A. Kress, ``Parapsychology in intelligence: A personal review and conclusions,'' \textit{Studies in Intelligence}, vol.~19, pp.~50--62, 1977. Declassified 1996; reprinted in \textit{Journal of Scientific Exploration}, vol.~13, no.~1, pp.~69--85, 1999.
+
+\bibitem{dod1995}
+U.S. Department of Defense, ``Declassified records of Project SCANATE, GRILL FLAME, and CENTER LANE,'' Defense Intelligence Agency FOIA release, 1995.
+
+\bibitem{fama2010}
+E.\,F. Fama and K.\,R. French, ``Luck versus skill in the cross-section of mutual fund returns,'' \textit{The Journal of Finance}, vol.~65, no.~5, pp.~1915--1947, 2010.
+
+\bibitem{norman2017}
+G.\,R. Norman \textit{et al.}, ``The causes of errors in clinical reasoning: Cognitive biases, knowledge deficits, and dual process theory,'' \textit{Academic Medicine}, vol.~92, no.~1, pp.~23--30, 2017.
+
+\bibitem{ester1996}
+M. Ester \textit{et al.}, ``A density-based algorithm for discovering clusters in large spatial databases with noise,'' in \textit{Proc.\ KDD-96}, pp.~226--231, 1996.
+
+\bibitem{tetlock2015}
+P.\,E. Tetlock and D. Gardner, \textit{Superforecasters: The Art and Science of Prediction}. Crown, 2015.
+
+\bibitem{nolan2022}
+G.\,P. Nolan, ``Anomalous brain structure in individuals reporting UAP encounters,'' Presentation, Sol Foundation Symposium, Stanford University, 2023.
+
+\bibitem{shannon1948}
+C.\,E. Shannon, ``A mathematical theory of communication,'' \textit{The Bell System Technical Journal}, vol.~27, no.~3, pp.~379--423, 1948.
+
+\bibitem{cover2006}
+T.\,M. Cover and J.\,A. Thomas, \textit{Elements of Information Theory}, 2nd ed. Wiley-Interscience, 2006.
+
+\bibitem{mossbridge2012}
+J.\,A. Mossbridge, P. Tressoldi, and J. Utts, ``Predictive physiological anticipation preceding seemingly unpredictable stimuli: A meta-analysis,'' \textit{Frontiers in Psychology}, vol.~3, art.~390, 2012.
+
+\bibitem{radin2004}
+D.\,I. Radin, ``Electrodermal presentiments of future emotions,'' \textit{Journal of Scientific Exploration}, vol.~18, no.~2, pp.~253--273, 2004.
+
+\bibitem{bollerslev1986}
+T. Bollerslev, ``Generalized autoregressive conditional heteroskedasticity,'' \textit{Journal of Econometrics}, vol.~31, no.~3, pp.~307--327, 1986.
+
+\bibitem{nolan2020}
+J.\,P. Nolan, \textit{Stable Distributions: Models for Heavy Tailed Data}. Birkh\"{a}user, 2020.
+
+\bibitem{bem2011}
+D.\,J. Bem, ``Feeling the future: Experimental evidence for anomalous retroactive influences on cognition and affect,'' \textit{Journal of Personality and Social Psychology}, vol.~100, no.~3, pp.~407--425, 2011.
+
+\bibitem{freeman2011}
+J.\,B. Freeman and N. Ambady, ``MouseTracker: Software for studying real-time mental processing using a computer mouse-tracking method,'' \textit{Behavior Research Methods}, vol.~43, no.~1, pp.~226--242, 2011.
+
+\bibitem{galak2012}
+J. Galak \textit{et al.}, ``Correcting the past: Failures to replicate psi,'' \textit{Journal of Personality and Social Psychology}, vol.~103, no.~6, pp.~933--948, 2012.
+
+\end{thebibliography}
+
+\end{document}
