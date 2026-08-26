@@ -1,56 +1,45 @@
-# Persistent Anomaly Framework (PAF) — Pilot Simulation
+# Persistent Anomaly Framework (PAF)
 
 **Author:** Zach Sparks  
 **Affiliation:** Sparks Solutions LLC / Technological Leadership, Arizona State University
 
-## Overview
+## Current public preprint
 
-Synthetic validation of the PAF screening pipeline. Generates a cohort of N=200 subjects (8 injected anomalies at effect sizes d=0.08–0.25, 192 null), simulates T=5 sessions of K=100 items with M=4 options each, extracts the paper's 11-dimensional feature space (6 signal + 5 noise-as-feature), and runs the 3-phase pipeline (k-means screening → Bayesian validation → DBSCAN + XGBoost characterization).
+**v17.1 - final public-release edition (July 2026)**
 
-## Key Result
+[Download the current paper (PDF)](PAF_v17_1_FINAL_Sparks_2026.pdf)
 
-| Classifier | Sensitivity | Specificity | AUC |
-|---|---|---|---|
-| Bayesian threshold (P ≥ 0.95) | 0.575 ± 0.100 | 1.000 ± 0.000 | 0.971 ± 0.030 |
-| XGBoost (11-dim features) | 0.925 ± 0.065 | 1.000 ± 0.000 | 1.000 ± 0.000 |
+The Persistent Anomaly Framework is a proposed methodological architecture for testing whether human behavioral response streams exhibit reproducible dependence on concealed, independently randomized targets. It is designed to be falsifiable and mechanism-agnostic.
 
-**Findings:**
-1. The pipeline achieves **zero false positives** across all seeds — max null posterior is 0.003, far below the 0.95 threshold
-2. The Bayesian threshold reliably detects anomalies with effect sizes d ≥ 0.15 but misses weaker effects (d = 0.08–0.12), consistent with the paper's power analysis
-3. The 11-dimensional XGBoost classifier achieves perfect AUC, confirming that noise-as-feature dimensions provide discriminative signal beyond accuracy alone
-4. **N2 (error directionality)** is the second most important feature after density, directly validating the noise-as-feature paradigm — structure in *errors* carries more signal than most conventional metrics
-5. Override injection (initial-correct-then-changed) produces detectable signatures recoverable by the behavioral monitoring layer
+The current confirmatory architecture uses:
 
-## What This Demonstrates
+- target-conditioned held-out predictive improvement;
+- a target-independent null model whose covariates contain no candidate-key information;
+- full-pipeline legal-key randomization inference;
+- full-path repeated-look control;
+- independent replication before any persistent designation;
+- fresh, non-reusable HSM-generated session secrets committed before each unpredictable public-beacon pulse and released only after that session's behavioral log is cryptographically frozen;
+- deterministic, auditable target derivation with rejection sampling for arbitrary option counts.
 
-This is a **proof-of-concept**, not empirical validation. It shows that:
-- The pipeline architecture works as specified
-- The 11-dimensional feature space separates injected anomalies from null subjects
-- The Bayesian accumulation model correctly converges across sessions
-- The specificity guarantee (zero false positives) holds under the stated threshold
+The paper reports **no empirical evidence that anomalous cognition, retrocausality, or any particular mechanism exists**. It specifies a protocol for testing those hypotheses under explicit controls.
 
-It does **not** show that anomalous cognition exists or that real human subjects would produce the injected signal patterns.
+## Repository structure
 
-## Quick Start
-
-```bash
-pip install numpy scipy scikit-learn xgboost
-python experiment.py
-```
-
-## Repository Structure
-
-```
-├── experiment.py          # Full simulation
-├── results.json           # Output (generated on run)
+```text
+├── paf.tex                              # Canonical LaTeX source for the current paper
+├── PAF_v17_1_FINAL_Sparks_2026.pdf      # Current compiled public preprint
+├── experiment.py                        # Legacy synthetic pilot from the pre-v17 architecture
+├── results.json                         # Legacy pilot output
+├── requirements.txt                     # Dependencies for the legacy pilot
 └── README.md
 ```
 
-## Current Limitations
+## Important note on the legacy simulation
 
-- Synthetic data with injected ground truth — not real human behavioral data
-- Override pattern is modeled simplistically (30% override rate for anomalies)
-- Temporal asymmetry (N1) is approximated via forward/backward hit comparison
-- Cross-task coherence (N4) uses per-item accuracy correlation rather than CCA
-- Alpha-stable index (N5) approximated by kurtosis
-- XGBoost trained and evaluated on same data (no held-out test set) — AUC=1.0 is therefore an upper bound
+`experiment.py` and `results.json` are retained for historical reproducibility of an earlier synthetic proof-of-concept. They implement a **pre-v17** screening/Bayesian/classification pipeline and are **not** an implementation or validation of the current v17.1 target-conditioned confirmatory engine. Results from that legacy simulation should not be cited as evidence that the current framework is statistically validated or that anomalous cognition exists.
+
+The next empirical step for the current framework is a preregistered simulation and pilot package implementing the v17.1 legal-key, cross-fitted, full-path randomization design.
+
+## Scientific status
+
+PAF v17.1 is a proposed methodological framework awaiting empirical validation. Any future operational or applied use requires independent replication, calibration, incremental validity against existing methods, and domain-specific ethics review.
