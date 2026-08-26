@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - '.release_parts/**'
+  issues:
+    types: [opened]
+  workflow_dispatch:
 
 permissions:
   contents: write
